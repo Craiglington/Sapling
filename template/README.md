@@ -1,6 +1,6 @@
-# Simple Web Client
+# Simple Web Client Starter Template
 
-A starter template using a simple web framework for TypeScript projects.
+A starter template using the simple-web-client framework for TypeScript projects.
 
 ## Development Features
 
