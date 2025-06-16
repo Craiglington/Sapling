@@ -1,0 +1,25 @@
+{
+  "name": "",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "build": "bash .simple-web-client/build.sh",
+    "start": "bash .simple-web-client/start.sh",
+    "test": "echo Error: no tests specified!",
+    "prettier": "npx prettier . --write"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/"
+  },
+  "author": "",
+  "license": "",
+  "bugs": {
+    "url": "https://github.com/"
+  },
+  "homepage": "https://github.com/",
+  "devDependencies": {
+    "prettier": "3.5.3",
+    "typescript": "^5.8.3"
+  }
+}

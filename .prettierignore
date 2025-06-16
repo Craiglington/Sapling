@@ -1,3 +1,2 @@
-# Ignore artifacts:
-dev-server
+template
 node_modules

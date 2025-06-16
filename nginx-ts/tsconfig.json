@@ -6,10 +6,7 @@
     "removeComments": true,
     "preserveConstEnums": true,
     "allowSyntheticDefaultImports": true,
-    "outDir": "./../dev-server",
-    // "declaration": true,
-    // "declarationMap": true,
-    // "declarationDir": "types"
+    "outDir": "./../template/.simple-web-client/nginx/scripts",
   },
   "include": ["./**/*"],
   "watchOptions": {

@@ -3,10 +3,12 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "build": "npx tsc",
-    "start": "npx tsc --watch",
+    "start-nginx": "npx tsc --project nginx-ts --watch",
+    "build-nginx": "npx tsc --project nginx-ts",
+    "start-reload-server": "npx tsc --project reload-server-ts --watch",
+    "build-reload-server": "npx tsc --project reload-server-ts",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prettier": "npx prettier . --write src/"
+    "prettier": "npx prettier . --write"
   },
   "repository": {
     "type": "git",
