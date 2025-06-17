@@ -6,7 +6,10 @@
     "removeComments": true,
     "preserveConstEnums": true,
     "allowSyntheticDefaultImports": true,
-    "outDir": "./../template/.simple-web-client/nginx/scripts",
+    "strict": true,
+    "outDir": "./../template/.simple-web-client/lib",
+    "declaration": true,
+    
   },
   "include": ["./**/*"],
   "watchOptions": {

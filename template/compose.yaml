@@ -31,6 +31,11 @@ services:
           target: /html
           exec:
             command: ["./reload.sh"]
+        - action: sync+exec
+          path: ./.simple-web-client/lib
+          target: /html/simple-web-client
+          exec:
+            command: ["./reload.sh"]
 
 networks:
   dev:

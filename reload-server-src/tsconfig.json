@@ -6,7 +6,7 @@
     "removeComments": true,
     "preserveConstEnums": true,
     "allowSyntheticDefaultImports": true,
-    "outDir": "./../template/.simple-web-client/reload-server/scripts",
+    "outDir": "./../template/.simple-web-client/reload-server/src",
   },
   "include": ["./**/*"],
   "watchOptions": {
