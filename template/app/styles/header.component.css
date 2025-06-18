@@ -1,0 +1,7 @@
+:host {
+  display: flow-root;
+}
+
+.header-component {
+  color: green;
+}

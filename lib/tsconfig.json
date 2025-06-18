@@ -1,9 +1,10 @@
 {
   "compilerOptions": {
     "module": "esnext",
+    "target": "esnext",
     "moduleResolution": "bundler",
     "noImplicitAny": true,
-    "removeComments": true,
+    "removeComments": false,
     "preserveConstEnums": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,

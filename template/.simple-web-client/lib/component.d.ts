@@ -1,10 +1,25 @@
-export type ComponentOptions = {
-    parent: HTMLElement;
-    template?: string;
-    templateUrl?: string;
+export type ComponentConfig = {
+    templateUrl: string;
+    styleUrls?: string[];
 };
-export declare class Component {
-    private parent;
-    private template?;
-    constructor(options: ComponentOptions);
+/**
+ * See https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements
+ */
+export declare class Component extends HTMLElement {
+    static observedAttributes: never[];
+    private static globalStyleSheets;
+    private static savedTemplates;
+    private static savedStyles;
+    private config;
+    private getTemplatePromise;
+    private getStyleSheetsPromise;
+    constructor(config: ComponentConfig);
+    /**
+     * Using this method will only add a global stylesheet to Components not yet created.
+     * @param url The url of the stylesheet. Ex: `/styles/global.css`.
+     */
+    static addGlobalStyleSheet(url: string): void;
+    connectedCallback(): void;
+    private getTemplate;
+    private getStyleSheets;
 }
