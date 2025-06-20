@@ -1,10 +1,13 @@
+/**
+ * All Urls should be relative to the `app` directory.
+ */
 export type ComponentConfig = {
   templateUrl: string;
   styleUrls?: string[];
 };
 
 /**
- * See https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements
+ * See https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements for details on lifecycle events.
  */
 export class Component extends HTMLElement {
   static observedAttributes = [];
@@ -31,18 +34,22 @@ export class Component extends HTMLElement {
     Component.globalStyleSheets.push(url);
   }
 
-  connectedCallback() {
+  async connectedCallback() {
     this.attachShadow({ mode: "open" });
 
-    this.getTemplatePromise.then((template) => {
-      this.shadowRoot!.innerHTML += template;
-    });
+    if (!this.shadowRoot) {
+      return;
+    }
 
-    this.getStyleSheetsPromise.then((sheets) => {
-      this.shadowRoot!.adoptedStyleSheets =
-        this.shadowRoot!.adoptedStyleSheets.concat(sheets);
-    });
+    const template = await this.getTemplatePromise;
+    this.shadowRoot.innerHTML += template;
+
+    const styleSheets = await this.getStyleSheetsPromise;
+    this.shadowRoot!.adoptedStyleSheets =
+      this.shadowRoot.adoptedStyleSheets.concat(styleSheets);
   }
+
+  connectedMoveCallback() {}
 
   private getTemplate(): Promise<string> {
     return new Promise<string>((resolve) => {

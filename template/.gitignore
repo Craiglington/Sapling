@@ -1,5 +1,5 @@
 node_modules
-.simple-web-client/dist
 .simple-web-client/nginx/certs
-app/dist
+app/**/*.js
+dist
 package-lock.json

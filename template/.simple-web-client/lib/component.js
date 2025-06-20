@@ -1,5 +1,5 @@
 /**
- * See https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements
+ * See https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements for details on lifecycle events.
  */
 export class Component extends HTMLElement {
     static observedAttributes = [];
@@ -22,16 +22,18 @@ export class Component extends HTMLElement {
     static addGlobalStyleSheet(url) {
         Component.globalStyleSheets.push(url);
     }
-    connectedCallback() {
+    async connectedCallback() {
         this.attachShadow({ mode: "open" });
-        this.getTemplatePromise.then((template) => {
-            this.shadowRoot.innerHTML += template;
-        });
-        this.getStyleSheetsPromise.then((sheets) => {
-            this.shadowRoot.adoptedStyleSheets =
-                this.shadowRoot.adoptedStyleSheets.concat(sheets);
-        });
+        if (!this.shadowRoot) {
+            return;
+        }
+        const template = await this.getTemplatePromise;
+        this.shadowRoot.innerHTML += template;
+        const styleSheets = await this.getStyleSheetsPromise;
+        this.shadowRoot.adoptedStyleSheets =
+            this.shadowRoot.adoptedStyleSheets.concat(styleSheets);
     }
+    connectedMoveCallback() { }
     getTemplate() {
         return new Promise((resolve) => {
             if (Component.savedTemplates[this.config.templateUrl]) {

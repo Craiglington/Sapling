@@ -1,16 +1,16 @@
 import { Component } from "/simple-web-client/component.js";
+import { env } from "../../envs/env.js";
 
 class LoginComponent extends Component {
   constructor() {
     super({
-      templateUrl: "/templates/login.component.html",
-      styleUrls: ["/styles/login.component.css"]
+      templateUrl: "/components/login/login.component.html",
+      styleUrls: ["/components/login/login.component.css"]
     });
   }
 
-  override connectedCallback() {
+  override async connectedCallback() {
     super.connectedCallback();
-    console.log("CONNECTED CALLBACK OVERRIDE!");
   }
 }
 

@@ -1,4 +1,5 @@
 node_modules
 .simple-web-client
-app/dist
+app/**/*.js
+dist
 package-lock.json

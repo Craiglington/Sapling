@@ -8,14 +8,13 @@
     "removeComments": true,
     "preserveConstEnums": true,
     "allowSyntheticDefaultImports": true,
-    "outDir": "app/dist",
     "noEmitOnError": true,
     "resolveJsonModule": true,
     "paths": {
       "/simple-web-client/*": ["./.simple-web-client/lib/*"]
     }
   },
-  "include": ["app/src"],
+  "include": ["app"],
   "watchOptions": {
     "watchFile": "useFsEvents",
     "watchDirectory": "useFsEvents",

@@ -1,9 +1,12 @@
+/**
+ * All Urls should be relative to the `app` directory.
+ */
 export type ComponentConfig = {
     templateUrl: string;
     styleUrls?: string[];
 };
 /**
- * See https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements
+ * See https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements for details on lifecycle events.
  */
 export declare class Component extends HTMLElement {
     static observedAttributes: never[];
@@ -19,7 +22,8 @@ export declare class Component extends HTMLElement {
      * @param url The url of the stylesheet. Ex: `/styles/global.css`.
      */
     static addGlobalStyleSheet(url: string): void;
-    connectedCallback(): void;
+    connectedCallback(): Promise<void>;
+    connectedMoveCallback(): void;
     private getTemplate;
     private getStyleSheets;
 }

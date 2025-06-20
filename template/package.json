@@ -4,7 +4,9 @@
   "description": "",
   "scripts": {
     "build": "bash .simple-web-client/build.sh",
-    "start": "bash .simple-web-client/start.sh",
+    "start": "echo Run the tsc and docker scripts.",
+    "tsc": "bash .simple-web-client/tsc.sh",
+    "docker": "bash .simple-web-client/docker.sh",
     "test": "echo Error: no tests specified!",
     "prettier": "npx prettier . --write"
   },

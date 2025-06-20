@@ -16,8 +16,7 @@ services:
       context: .
       dockerfile: ./.simple-web-client/nginx/nginx.Dockerfile
     ports:
-      - "443:443"
-      - "80:80"
+      - "4200:443"
     volumes:
       - ./.simple-web-client/nginx/certs:/certs:ro
     depends_on:
