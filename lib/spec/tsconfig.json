@@ -8,8 +8,10 @@
     "preserveConstEnums": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
-    "declaration": true,
-    "outDir": "dist"
+    "outDir": "dist",
+    "paths": {
+      "/__src__/*": ["./../dist/*"]
+    }
   },
   "include": ["src"],
   "watchOptions": {

@@ -1,2 +1,4 @@
 app/**/*.ts
+app/**/*.spec.js
 .simple-web-client/lib/**/*.ts
+.simple-web-client/lib/**/*.spec.js

@@ -1,7 +1,8 @@
 import { Component } from "/simple-web-client/component.js";
+import { Value } from "/simple-web-client/value.js";
 
 class HeaderComponent extends Component {
-  message: string = "Hello world!";
+  message = new Value("Hello world!");
 
   constructor() {
     super({
@@ -12,7 +13,18 @@ class HeaderComponent extends Component {
 
   override async connectedCallback() {
     await super.connectedCallback();
-    console.log(this.shadowRoot?.querySelector("h1"));
+    const header = this.shadowRoot?.querySelector("h1");
+    if (header) {
+      this.message.setTemplateProperty(header, "innerText", (value) => value);
+    }
+    setTimeout(() => {
+      this.message.value += " How you doin?";
+    }, 5000);
+    setTimeout(() => {
+      this.message.value = "";
+      this.message.clearTemplateProperties();
+      this.message.value = "TESTING!";
+    }, 10000);
   }
 }
 

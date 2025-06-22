@@ -7,7 +7,7 @@
     "start": "echo Run the tsc and docker scripts.",
     "tsc": "bash .simple-web-client/tsc.sh",
     "docker": "bash .simple-web-client/docker.sh",
-    "test": "echo Error: no tests specified!",
+    "test": "npx jasmine-broswer-runner runSpecs",
     "prettier": "npx prettier . --write"
   },
   "repository": {
@@ -21,6 +21,9 @@
   },
   "homepage": "https://github.com/",
   "devDependencies": {
+    "@types/jasmine": "^5.1.8",
+    "jasmine-browser-runner": "^3.0.0",
+    "jasmine-core": "^5.8.0",
     "prettier": "3.5.3",
     "typescript": "^5.8.3"
   }
