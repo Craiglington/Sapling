@@ -26,8 +26,9 @@ export class Value {
             console.error("Error while setting template element property: ", error);
         }
     }
-    setTemplateProperty(element, property, callback) {
-        this.setElementProperty(element, property, callback);
+    bindTemplateProperty(element, property, callback) {
+        const setCallback = callback || ((value) => value);
+        this.setElementProperty(element, property, setCallback);
         let templateElement = this.templateElements.find((existingTemplateElement) => existingTemplateElement.element === element);
         if (!templateElement) {
             templateElement = {
@@ -36,18 +37,19 @@ export class Value {
             };
             this.templateElements.push(templateElement);
         }
-        templateElement.properties.set(property, callback);
+        templateElement.properties.set(property, setCallback);
     }
-    clearTemplateProperty(element, property) {
+    unbindTemplateProperty(element, property) {
         let templateElementIndex = this.templateElements.findIndex((existingTemplateElement) => existingTemplateElement.element === element);
         if (templateElementIndex === -1)
             return;
-        const properties = this.templateElements[templateElementIndex].properties;
+        const properties = this.templateElements[templateElementIndex]
+            .properties;
         if (properties.delete(property) && properties.size === 0) {
             this.templateElements.splice(templateElementIndex, 1);
         }
     }
-    clearTemplateProperties() {
+    unbindTemplateProperties() {
         this.templateElements.length = 0;
     }
 }

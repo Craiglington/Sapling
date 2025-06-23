@@ -1,8 +1,120 @@
 import { Value } from "/__src__/value.js";
 
 describe("Value", () => {
+  let value: Value<string>;
+  let header: HTMLHeadElement;
+
+  beforeEach(() => {
+    value = new Value("Hello world!");
+    header = document.createElement("h1");
+  });
+
   it("should create", () => {
-    const value = new Value<string>("test");
-    expect(true).toBeTruthy();
+    expect(value).toBeTruthy();
+    expect(value.value).toBe("Hello world!");
+    expect(header).toBeTruthy();
+  });
+
+  it("should bind a property on an HTMLElement", () => {
+    expect(value["templateElements"].length).toBe(0);
+    value.bindTemplateProperty(header, "innerText");
+    expect(value["templateElements"].length).toBe(1);
+    expect(header.innerText).toBe("Hello world!");
+    value.value = "New value!";
+    expect(header.innerText).toBe("New value!");
+  });
+
+  it("should bind multiple properties on an HTMLElement", () => {
+    value.bindTemplateProperty(header, "innerText");
+    value.bindTemplateProperty(
+      header,
+      "hidden",
+      (value) => value === "Hello world!"
+    );
+    expect(header.innerText).toBe("Hello world!");
+    expect(header.hidden).toBeTrue();
+    value.value = "New value!";
+    expect(header.innerText).toBe("New value!");
+    expect(header.hidden).toBeFalse();
+  });
+
+  it("should bind multiple properties on multiple HTMLElements", () => {
+    expect(value["templateElements"].length).toBe(0);
+    value.value = "test";
+    value.bindTemplateProperty(header, "innerText");
+    value.bindTemplateProperty(
+      header,
+      "hidden",
+      (value) => value === "new-test"
+    );
+    expect(header.innerText).toBe("test");
+    expect(header.hidden).toBeFalse();
+    expect(value["templateElements"].length).toBe(1);
+
+    const link = document.createElement("a");
+    value.bindTemplateProperty(link, "innerText");
+    value.bindTemplateProperty(
+      link,
+      "href",
+      (value) => `https://test.com/${value}`
+    );
+    expect(link.innerText).toBe("test");
+    expect(link.href).toBe("https://test.com/test");
+    expect(value["templateElements"].length).toBe(2);
+
+    value.value = "new-test";
+    expect(header.innerText).toBe("new-test");
+    expect(header.hidden).toBeTrue();
+    expect(link.innerText).toBe("new-test");
+    expect(link.href).toBe("https://test.com/new-test");
+  });
+
+  it("should unbind a template property", () => {
+    spyOn(value["templateElements"], "splice").and.callThrough();
+    value.bindTemplateProperty(header, "innerText");
+    value.bindTemplateProperty(
+      header,
+      "hidden",
+      (value) => value === "Hello world!"
+    );
+    expect(header.innerText).toBe("Hello world!");
+    expect(header.hidden).toBeTrue();
+
+    value.unbindTemplateProperty(header, "hidden");
+
+    value.value = "new value";
+    expect(header.innerText).toBe("new value");
+    expect(header.hidden).toBeTrue();
+
+    expect(value["templateElements"].length).toBe(1);
+    value.unbindTemplateProperty(header, "innerText");
+    expect(value["templateElements"].length).toBe(0);
+
+    value.value = "new value 2";
+    expect(header.innerText).toBe("new value");
+    expect(header.hidden).toBeTrue();
+    expect(value["templateElements"].splice).toHaveBeenCalledTimes(1);
+  });
+
+  it("should do nothing if unbinding a property that does not exist", () => {
+    value.bindTemplateProperty(header, "innerText");
+    spyOn(value["templateElements"], "splice").and.callThrough();
+    value.unbindTemplateProperty(header, "onclick");
+    expect(value["templateElements"].splice).toHaveBeenCalledTimes(0);
+  });
+
+  it("should unbind all properties", () => {
+    value.bindTemplateProperty(header, "innerText");
+    const link = document.createElement("a");
+    value.bindTemplateProperty(link, "innerText");
+    expect(header.innerText).toBe("Hello world!");
+    expect(link.innerText).toBe("Hello world!");
+    expect(value["templateElements"].length).toBe(2);
+
+    value.unbindTemplateProperties();
+    value.value = "new value";
+    expect(header.innerText).toBe("Hello world!");
+    expect(link.innerText).toBe("Hello world!");
+    expect(value["templateElements"].length).toBe(0);
   });
 });

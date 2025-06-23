@@ -1,4 +1,5 @@
 export type Subscriber<T> = (value: T) => void;
+
 export type Subscription = {
   unsubscribe: () => void;
 };

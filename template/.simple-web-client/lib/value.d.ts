@@ -1,12 +1,12 @@
-export declare class Value<T> {
+export declare class Value<TValue> {
     private _value;
     private templateElements;
-    constructor(value: T);
-    get value(): T;
-    set value(value: T);
+    constructor(value: TValue);
+    get value(): TValue;
+    set value(value: TValue);
     private updateTemplateProperties;
     private setElementProperty;
-    setTemplateProperty(element: HTMLElement, property: keyof HTMLElement, callback: (value: T) => any): void;
-    clearTemplateProperty(element: HTMLElement, property: keyof HTMLElement): void;
-    clearTemplateProperties(): void;
+    bindTemplateProperty<TElement extends HTMLElement>(element: TElement, property: keyof TElement, callback?: (value: TValue) => any): void;
+    unbindTemplateProperty<TElement extends HTMLElement>(element: TElement, property: keyof TElement): void;
+    unbindTemplateProperties(): void;
 }

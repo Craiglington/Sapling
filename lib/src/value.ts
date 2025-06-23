@@ -1,13 +1,13 @@
-type TemplateElement<T> = {
-  element: HTMLElement;
-  properties: Map<keyof HTMLElement, (value: T) => any>;
+type TemplateElement<TElement extends HTMLElement, TValue> = {
+  element: TElement;
+  properties: Map<keyof TElement, (value: TValue) => any>;
 };
 
-export class Value<T> {
-  private _value: T;
-  private templateElements: TemplateElement<T>[] = [];
+export class Value<TValue> {
+  private _value: TValue;
+  private templateElements: TemplateElement<any, TValue>[] = [];
 
-  constructor(value: T) {
+  constructor(value: TValue) {
     this._value = value;
   }
 
@@ -15,7 +15,7 @@ export class Value<T> {
     return this._value;
   }
 
-  set value(value: T) {
+  set value(value: TValue) {
     this._value = value;
     this.updateTemplateProperties();
   }
@@ -32,10 +32,10 @@ export class Value<T> {
     }
   }
 
-  private setElementProperty(
-    element: HTMLElement,
-    property: keyof HTMLElement,
-    callback: (value: T) => any
+  private setElementProperty<TElement extends HTMLElement>(
+    element: TElement,
+    property: keyof TElement,
+    callback: (value: TValue) => any
   ) {
     try {
       (element as any)[property] = callback(this._value);
@@ -44,15 +44,18 @@ export class Value<T> {
     }
   }
 
-  setTemplateProperty(
-    element: HTMLElement,
-    property: keyof HTMLElement,
-    callback: (value: T) => any
+  bindTemplateProperty<TElement extends HTMLElement>(
+    element: TElement,
+    property: keyof TElement,
+    callback?: (value: TValue) => any
   ) {
-    this.setElementProperty(element, property, callback);
+    const setCallback = callback || ((value) => value);
+    this.setElementProperty(element, property, setCallback);
+
     let templateElement = this.templateElements.find(
       (existingTemplateElement) => existingTemplateElement.element === element
-    );
+    ) as TemplateElement<TElement, TValue> | undefined;
+
     if (!templateElement) {
       templateElement = {
         element: element,
@@ -60,21 +63,29 @@ export class Value<T> {
       };
       this.templateElements.push(templateElement);
     }
-    templateElement.properties.set(property, callback);
+
+    templateElement.properties.set(property, setCallback);
   }
 
-  clearTemplateProperty(element: HTMLElement, property: keyof HTMLElement) {
+  unbindTemplateProperty<TElement extends HTMLElement>(
+    element: TElement,
+    property: keyof TElement
+  ) {
     let templateElementIndex = this.templateElements.findIndex(
       (existingTemplateElement) => existingTemplateElement.element === element
     );
+
     if (templateElementIndex === -1) return;
-    const properties = this.templateElements[templateElementIndex].properties;
+
+    const properties = this.templateElements[templateElementIndex]
+      .properties as Map<keyof TElement, (value: TValue) => any>;
+
     if (properties.delete(property) && properties.size === 0) {
       this.templateElements.splice(templateElementIndex, 1);
     }
   }
 
-  clearTemplateProperties() {
+  unbindTemplateProperties() {
     this.templateElements.length = 0;
   }
 }
