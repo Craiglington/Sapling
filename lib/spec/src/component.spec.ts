@@ -15,7 +15,7 @@ class TestComponent extends Component {
 
 window.customElements.define("test-component", TestComponent);
 
-fdescribe("Component", () => {
+describe("Component", () => {
   let testComponent: TestComponent;
 
   beforeEach(() => {
