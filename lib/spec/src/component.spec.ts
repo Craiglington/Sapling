@@ -1,47 +1,78 @@
-import { Component, ComponentConfig } from "/__src__/component.js";
+import { Component } from "/__src__/component.js";
 
-// Create component
-const templateURL = "template.html";
-const styleUrls = ["styles-one.css", "styles-two.css", "styles-three.css"];
-
-class TestComponent extends Component {
-  constructor() {
-    super({
-      templateUrl: templateURL,
-      styleUrls: styleUrls
-    });
+type File = { url: string; content: string };
+const template: File = {
+  url: "/template.html",
+  content: "<h1>Hello world!</h1>"
+};
+const styleSheets: File[] = [
+  {
+    url: "/styles-one.css",
+    content: "body { color: blue; }"
+  },
+  {
+    url: "/styles-two.css",
+    content: "h1 { color: black !important; }"
+  },
+  {
+    url: "/styles-three.css",
+    content: ".spacer { flex: 1 1 auto; }"
   }
-}
-
-window.customElements.define("test-component", TestComponent);
+];
+const globalStyleSheets: File[] = [
+  {
+    url: "/styles.css",
+    content: "p { font-weight: bold; }"
+  }
+];
 
 describe("Component", () => {
+  class TestComponent extends Component {
+    constructor() {
+      super({
+        templateUrl: template.url,
+        styleUrls: styleSheets.map((sheet) => sheet.url)
+      });
+    }
+  }
+
+  window.customElements.define("test-component", TestComponent);
+
   let testComponent: TestComponent;
 
-  beforeEach(() => {
+  beforeAll(() => {
     spyOn(window, "fetch").and.callFake(async (input: RequestInfo | URL) => {
-      if (input === templateURL) {
-        return new Response("<h1>Hello world!</h1>");
-      } else if (input === styleUrls[0]) {
-        return new Response("body { color: blue; }");
-      } else if (input === styleUrls[1]) {
-        return new Response("h1 { color: black !important; }");
-      } else if (input === styleUrls[2]) {
-        return new Response(".spacer { flex: 1 1 auto; }");
-      } else if (input === "/styles.css") {
-        return new Response("p { font-weight: bold; }");
+      if (input === template.url) {
+        return new Response(template.content);
       }
+
+      for (const sheet of globalStyleSheets) {
+        if (input === sheet.url) {
+          return new Response(sheet.content);
+        }
+      }
+
+      for (const sheet of styleSheets) {
+        if (input === sheet.url) {
+          return new Response(sheet.content);
+        }
+      }
+
       return new Response(null, {
         status: 404,
         statusText: "Not Found"
       });
     });
+  });
 
+  beforeEach(() => {
     testComponent = new TestComponent();
   });
 
   it("should have global style sheets", () => {
-    expect(Component["globalStyleSheets"]).toEqual(["/styles.css"]);
+    expect(Component["globalStyleSheets"]).toEqual(
+      globalStyleSheets.map((sheet) => sheet.url)
+    );
   });
 
   it("should create and begin fetching files", () => {
@@ -62,16 +93,20 @@ describe("Component", () => {
   it("should finish fetching all files in the connectedCallback", async () => {
     await testComponent.connectedCallback();
     expect(testComponent.shadowRoot).toBeTruthy();
-    expect(testComponent.shadowRoot!.innerHTML).toBe("<h1>Hello world!</h1>");
+    expect(testComponent.shadowRoot!.innerHTML).toBe(template.content);
     const sheets = testComponent.shadowRoot!.adoptedStyleSheets;
-    expect(sheets.length).toBe(
-      styleUrls.length + Component["globalStyleSheets"].length
+    expect(sheets.length).toBe(styleSheets.length + globalStyleSheets.length);
+    expect(sheets.map((sheet) => sheet.cssRules.item(0)?.cssText)).toEqual(
+      globalStyleSheets
+        .map((sheet) => sheet.content)
+        .concat(styleSheets.map((sheet) => sheet.content))
     );
-    expect(sheets.map((sheet) => sheet.cssRules.item(0)?.cssText)).toEqual([
-      "p { font-weight: bold; }",
-      "body { color: blue; }",
-      "h1 { color: black !important; }",
-      ".spacer { flex: 1 1 auto; }"
-    ]);
+  });
+
+  it("should have called fetch once for each file", async () => {
+    await testComponent.connectedCallback();
+    expect(window.fetch).toHaveBeenCalledTimes(
+      1 + globalStyleSheets.length + styleSheets.length
+    );
   });
 });
