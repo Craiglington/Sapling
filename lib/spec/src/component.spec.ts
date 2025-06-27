@@ -26,6 +26,29 @@ const globalStyleSheets: File[] = [
   }
 ];
 
+const mockFetch = async (input: RequestInfo | URL) => {
+  if (input === template.url) {
+    return new Response(template.content);
+  }
+
+  for (const sheet of globalStyleSheets) {
+    if (input === sheet.url) {
+      return new Response(sheet.content);
+    }
+  }
+
+  for (const sheet of styleSheets) {
+    if (input === sheet.url) {
+      return new Response(sheet.content);
+    }
+  }
+
+  return new Response(null, {
+    status: 404,
+    statusText: "Not Found"
+  });
+};
+
 describe("Component", () => {
   class TestComponent extends Component {
     constructor() {
@@ -41,28 +64,7 @@ describe("Component", () => {
   let testComponent: TestComponent;
 
   beforeAll(() => {
-    spyOn(window, "fetch").and.callFake(async (input: RequestInfo | URL) => {
-      if (input === template.url) {
-        return new Response(template.content);
-      }
-
-      for (const sheet of globalStyleSheets) {
-        if (input === sheet.url) {
-          return new Response(sheet.content);
-        }
-      }
-
-      for (const sheet of styleSheets) {
-        if (input === sheet.url) {
-          return new Response(sheet.content);
-        }
-      }
-
-      return new Response(null, {
-        status: 404,
-        statusText: "Not Found"
-      });
-    });
+    spyOn(window, "fetch").and.callFake(mockFetch);
   });
 
   beforeEach(() => {
@@ -107,6 +109,48 @@ describe("Component", () => {
     await testComponent.connectedCallback();
     expect(window.fetch).toHaveBeenCalledTimes(
       1 + globalStyleSheets.length + styleSheets.length
+    );
+  });
+});
+
+describe("Component with bad files", () => {
+  class BadFilesComponent extends Component {
+    constructor() {
+      super({
+        templateUrl: "/not-found.html",
+        styleUrls: styleSheets
+          .map((sheet) => sheet.url)
+          .concat("/not-found.css")
+      });
+    }
+  }
+
+  window.customElements.define("bad-files-component", BadFilesComponent);
+
+  let badFilesComponent: BadFilesComponent;
+
+  beforeAll(() => {
+    spyOn(window, "fetch").and.callFake(mockFetch);
+  });
+
+  beforeEach(() => {
+    badFilesComponent = new BadFilesComponent();
+  });
+
+  it("should have an empty template", async () => {
+    await badFilesComponent.connectedCallback();
+    expect(badFilesComponent.shadowRoot).toBeTruthy();
+    expect(badFilesComponent.shadowRoot!.innerHTML).toBe("");
+  });
+
+  it("should not have a stylesheet for bad files", async () => {
+    await badFilesComponent.connectedCallback();
+    const sheets = badFilesComponent.shadowRoot!.adoptedStyleSheets;
+    expect(sheets.length).toBe(styleSheets.length + globalStyleSheets.length);
+    expect(sheets.map((sheet) => sheet.cssRules.item(0)?.cssText)).toEqual(
+      globalStyleSheets
+        .map((sheet) => sheet.content)
+        .concat(styleSheets.map((sheet) => sheet.content))
     );
   });
 });
