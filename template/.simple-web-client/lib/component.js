@@ -17,7 +17,7 @@ export class Component extends HTMLElement {
     }
     /**
      * Using this method will only add a global stylesheet to Components not yet created.
-     * @param url The url of the stylesheet. Ex: `/styles/global.css`.
+     * @param url The url of the stylesheet. Ex: `/global.css`.
      */
     static addGlobalStyleSheet(url) {
         Component.globalStyleSheets.push(url);
@@ -27,48 +27,63 @@ export class Component extends HTMLElement {
         if (!this.shadowRoot) {
             return;
         }
-        const template = await this.getTemplatePromise;
-        this.shadowRoot.innerHTML += template;
-        const styleSheets = await this.getStyleSheetsPromise;
+        const fetchResults = await Promise.all([
+            this.getTemplatePromise,
+            this.getStyleSheetsPromise
+        ]);
+        this.shadowRoot.innerHTML += fetchResults[0];
         this.shadowRoot.adoptedStyleSheets =
-            this.shadowRoot.adoptedStyleSheets.concat(styleSheets);
+            this.shadowRoot.adoptedStyleSheets.concat(fetchResults[1]);
     }
     connectedMoveCallback() { }
     getTemplate() {
         return new Promise((resolve) => {
             if (Component.savedTemplates[this.config.templateUrl]) {
                 resolve(Component.savedTemplates[this.config.templateUrl]);
+                return;
             }
-            else {
-                fetch(this.config.templateUrl)
-                    .then((response) => response.text())
-                    .then((response) => {
-                    Component.savedTemplates[this.config.templateUrl] = response;
-                    resolve(response);
-                });
-            }
+            this.fetchFile(this.config.templateUrl)
+                .then((response) => {
+                Component.savedTemplates[this.config.templateUrl] = response;
+                resolve(response);
+            })
+                .catch((error) => {
+                console.error(`Failed to fetch template at ${this.config.templateUrl}: `, error);
+                resolve("");
+            });
         });
     }
-    getStyleSheets() {
+    async getStyleSheets() {
         const styleUrls = Component.globalStyleSheets.concat(this.config.styleUrls || []);
         if (styleUrls.length === 0) {
-            return Promise.resolve([]);
+            return [];
         }
         const promises = [];
+        const sheets = [];
         for (const styleUrl of styleUrls) {
             if (Component.savedStyles[styleUrl]) {
-                promises.push(Promise.resolve(Component.savedStyles[styleUrl]));
+                sheets.push(Component.savedStyles[styleUrl]);
                 continue;
             }
-            promises.push(fetch(styleUrl)
-                .then((response) => response.text())
+            promises.push(this.fetchFile(styleUrl)
                 .then((response) => {
                 const newSheet = new CSSStyleSheet();
                 newSheet.replaceSync(response);
                 Component.savedStyles[styleUrl] = newSheet;
-                return newSheet;
+                sheets.push(newSheet);
+            })
+                .catch((error) => {
+                console.error(`Failed to fetch css at ${styleUrl}: `, error);
             }));
         }
-        return Promise.all(promises);
+        await Promise.all(promises);
+        return sheets;
+    }
+    async fetchFile(url) {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Response not ok. Status: ${response.status}. ${response.statusText}`);
+        }
+        return await response.text();
     }
 }

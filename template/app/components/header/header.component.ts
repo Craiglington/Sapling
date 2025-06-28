@@ -15,16 +15,8 @@ class HeaderComponent extends Component {
     await super.connectedCallback();
     const header = this.shadowRoot?.querySelector("h1");
     if (header) {
-      this.message.setTemplateProperty(header, "innerText", (value) => value);
+      this.message.bindTemplateProperty(header, "innerText", (value) => value);
     }
-    setTimeout(() => {
-      this.message.value += " How you doin?";
-    }, 5000);
-    setTimeout(() => {
-      this.message.value = "";
-      this.message.clearTemplateProperties();
-      this.message.value = "TESTING!";
-    }, 10000);
   }
 }
 

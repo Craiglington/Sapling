@@ -1,12 +1,10 @@
 import { WebSocketServer } from "ws";
 import http from "node:http";
-const host = "0.0.0.0";
-const port = 8080;
-const wsPort = 8081;
+import { env } from "./env.js";
 let clients = [];
 http
     .createServer((req, res) => {
-    if (req.method === "POST" && req.url === "/reload") {
+    if (req.method === "POST" && req.url === env.reloadPath) {
         sendReloadMessages();
     }
     res.writeHead(200, {
@@ -16,14 +14,14 @@ http
     });
     res.end();
 })
-    .listen(port, host, () => {
-    console.log(`Reload server listening at http://${host}:${port}`);
+    .listen(env.serverPort, env.host, () => {
+    console.log(`Reload server listening at http://${env.host}:${env.serverPort}`);
 });
 const wss = new WebSocketServer({
-    host: host,
-    port: wsPort
+    host: env.host,
+    port: env.webSocketPort
 }, () => {
-    console.log(`Reload websocket server listening at http://${host}:${wsPort}`);
+    console.log(`Reload websocket server listening at http://${env.host}:${env.webSocketPort}`);
 });
 wss.on("connection", (ws) => {
     ws.on("close", () => {

@@ -2,8 +2,8 @@ FROM node:lts
 
 WORKDIR /reload-server
 
-COPY ./.simple-web-client/reload-server/src/reload-server.js .
+COPY ./.simple-web-client/reload-server/src/* .
 
 RUN npm install ws
 
-CMD ["node", "reload-server.js"]
+CMD ["npm", "start"]

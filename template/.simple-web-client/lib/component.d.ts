@@ -19,11 +19,12 @@ export declare class Component extends HTMLElement {
     constructor(config: ComponentConfig);
     /**
      * Using this method will only add a global stylesheet to Components not yet created.
-     * @param url The url of the stylesheet. Ex: `/styles/global.css`.
+     * @param url The url of the stylesheet. Ex: `/global.css`.
      */
     static addGlobalStyleSheet(url: string): void;
     connectedCallback(): Promise<void>;
     connectedMoveCallback(): void;
     private getTemplate;
     private getStyleSheets;
+    private fetchFile;
 }

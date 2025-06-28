@@ -1,8 +1,8 @@
-"use strict";
+import { env } from "./env.js";
 let reloadOnConnect = false;
 function connectToWebSocket() {
     console.log("⚠️ Attempting websocket connection...");
-    const socket = new WebSocket("ws://127.0.0.1:8081");
+    const socket = new WebSocket(`ws://${env.host}:${env.port}`);
     socket.addEventListener("open", function () {
         console.log("✅ Websocket connection established!");
         if (reloadOnConnect) {
