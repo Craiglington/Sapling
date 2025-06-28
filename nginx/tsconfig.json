@@ -4,17 +4,17 @@
     "target": "esnext",
     "moduleResolution": "bundler",
     "noImplicitAny": true,
-    "removeComments": true,
+    "removeComments": false,
     "preserveConstEnums": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
-    "outDir": "./../template/.simple-web-client/nginx/src",
+    "outDir": "dist"
   },
-  "include": ["./**/*"],
+  "include": ["src"],
   "watchOptions": {
     "watchFile": "useFsEvents",
     "watchDirectory": "useFsEvents",
     "fallbackPolling": "dynamicPriority",
-    "synchronousWatchDirectory": true,
+    "synchronousWatchDirectory": true
   }
 }

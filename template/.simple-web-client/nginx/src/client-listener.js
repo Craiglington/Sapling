@@ -1,7 +1,8 @@
-var reloadOnConnect = false;
+"use strict";
+let reloadOnConnect = false;
 function connectToWebSocket() {
     console.log("⚠️ Attempting websocket connection...");
-    var socket = new WebSocket("ws://127.0.0.1:8081");
+    const socket = new WebSocket("ws://127.0.0.1:8081");
     socket.addEventListener("open", function () {
         console.log("✅ Websocket connection established!");
         if (reloadOnConnect) {
@@ -14,7 +15,7 @@ function connectToWebSocket() {
     });
     socket.addEventListener("close", function () {
         console.log("⚠️ Websocket connection closed.");
-        window.setTimeout(function () {
+        window.setTimeout(() => {
             connectToWebSocket();
         }, 2000);
     });
