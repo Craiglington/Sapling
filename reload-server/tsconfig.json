@@ -1,18 +1,18 @@
 {
   "compilerOptions": {
     "module": "nodenext",
-    "strict": true,
     "noImplicitAny": true,
     "removeComments": true,
     "preserveConstEnums": true,
     "allowSyntheticDefaultImports": true,
-    "outDir": "./../template/.simple-web-client/reload-server/src",
+    "strict": true,
+    "outDir": "dist"
   },
-  "include": ["./**/*"],
+  "include": ["src"],
   "watchOptions": {
     "watchFile": "useFsEvents",
     "watchDirectory": "useFsEvents",
     "fallbackPolling": "dynamicPriority",
-    "synchronousWatchDirectory": true,
+    "synchronousWatchDirectory": true
   }
 }

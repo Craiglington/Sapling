@@ -1,15 +1,10 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const ws_1 = require("ws");
-const node_http_1 = __importDefault(require("node:http"));
+import { WebSocketServer } from "ws";
+import http from "node:http";
 const host = "0.0.0.0";
 const port = 8080;
 const wsPort = 8081;
 let clients = [];
-node_http_1.default
+http
     .createServer((req, res) => {
     if (req.method === "POST" && req.url === "/reload") {
         sendReloadMessages();
@@ -24,7 +19,7 @@ node_http_1.default
     .listen(port, host, () => {
     console.log(`Reload server listening at http://${host}:${port}`);
 });
-const wss = new ws_1.WebSocketServer({
+const wss = new WebSocketServer({
     host: host,
     port: wsPort
 }, () => {
