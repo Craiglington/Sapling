@@ -64,11 +64,21 @@ describe("Component", () => {
   let testComponent: TestComponent;
 
   beforeAll(() => {
+    Component["savedTemplates"] = {};
+    Component["savedStyles"] = {};
     spyOn(window, "fetch").and.callFake(mockFetch);
   });
 
   beforeEach(() => {
     testComponent = new TestComponent();
+  });
+
+  afterEach(async () => {
+    // For the sake of accurately counting fetch calls.
+    await Promise.all([
+      testComponent["getTemplatePromise"],
+      testComponent["getStyleSheetsPromise"]
+    ]);
   });
 
   it("should have global style sheets", () => {
@@ -107,6 +117,8 @@ describe("Component", () => {
 
   it("should have called fetch once for each file", async () => {
     await testComponent.connectedCallback();
+
+    // 1 for the template file
     expect(window.fetch).toHaveBeenCalledTimes(
       1 + globalStyleSheets.length + styleSheets.length
     );
@@ -130,10 +142,14 @@ describe("Component with bad files", () => {
   let badFilesComponent: BadFilesComponent;
 
   beforeAll(() => {
+    Component["savedTemplates"] = {};
+    Component["savedStyles"] = {};
     spyOn(window, "fetch").and.callFake(mockFetch);
+    spyOn(console, "error");
   });
 
   beforeEach(() => {
+    (console.error as jasmine.Spy<any>).calls.reset();
     badFilesComponent = new BadFilesComponent();
   });
 
@@ -141,6 +157,7 @@ describe("Component with bad files", () => {
     await badFilesComponent.connectedCallback();
     expect(badFilesComponent.shadowRoot).toBeTruthy();
     expect(badFilesComponent.shadowRoot!.innerHTML).toBe("");
+    expect(console.error).toHaveBeenCalled();
   });
 
   it("should not have a stylesheet for bad files", async () => {
@@ -152,5 +169,6 @@ describe("Component with bad files", () => {
         .map((sheet) => sheet.content)
         .concat(styleSheets.map((sheet) => sheet.content))
     );
+    expect(console.error).toHaveBeenCalled();
   });
 });

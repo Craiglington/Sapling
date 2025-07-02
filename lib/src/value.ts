@@ -1,27 +1,39 @@
-type TemplateElement<TElement extends HTMLElement, TValue> = {
+type Callback<T> = ((value: T) => any) | undefined;
+
+type Element<TElement extends HTMLElement, TValue> = {
   element: TElement;
-  properties: Map<keyof TElement, (value: TValue) => any>;
+  properties: Map<keyof TElement, Callback<TValue>>;
 };
 
+/**
+ * A `Value` is a wrapper for any type of variable.
+ * A `Value` is useful because it allows for one-way binding to `HTMLElement` properties.
+ */
 export class Value<TValue> {
   private _value: TValue;
-  private templateElements: TemplateElement<any, TValue>[] = [];
+  private elements: Element<any, TValue>[] = [];
 
   constructor(value: TValue) {
     this._value = value;
   }
 
+  /**
+   * Returns the current value of a `Value`.
+   */
   get value() {
     return this._value;
   }
 
+  /**
+   * Sets the current value of a `Value` and updates all bound properties.
+   */
   set value(value: TValue) {
     this._value = value;
-    this.updateTemplateProperties();
+    this.updateElementProperties();
   }
 
-  private updateTemplateProperties() {
-    for (const templateElement of this.templateElements) {
+  private updateElementProperties() {
+    for (const templateElement of this.elements) {
       for (const property of templateElement.properties.entries()) {
         this.setElementProperty(
           templateElement.element,
@@ -35,57 +47,80 @@ export class Value<TValue> {
   private setElementProperty<TElement extends HTMLElement>(
     element: TElement,
     property: keyof TElement,
-    callback: (value: TValue) => any
+    callback: Callback<TValue>
   ) {
     try {
-      (element as any)[property] = callback(this._value);
+      (element as any)[property] = callback
+        ? callback(this._value)
+        : this._value;
     } catch (error) {
       console.error("Error while setting template element property: ", error);
     }
   }
 
-  bindTemplateProperty<TElement extends HTMLElement>(
+  /**
+   * Binds the value of a `Value` to a property of an `HTMLElement`.
+   * When the value is updated, the property will be updated as well.
+   *
+   * Instead of simply setting the bound property to the value, an optional callback can be used to set the property based on the value.
+   * @param element An `HTMLElement`.
+   * @param property A property of the provided `HTMLElement`.
+   * @param callback A function that is passed the value and returns the property's value.
+   */
+  bindElementProperty<TElement extends HTMLElement>(
     element: TElement,
     property: keyof TElement,
-    callback?: (value: TValue) => any
+    callback?: Callback<TValue>
   ) {
-    const setCallback = callback || ((value) => value);
-    this.setElementProperty(element, property, setCallback);
+    this.setElementProperty(element, property, callback);
 
-    let templateElement = this.templateElements.find(
-      (existingTemplateElement) => existingTemplateElement.element === element
-    ) as TemplateElement<TElement, TValue> | undefined;
+    let existingElement = this.elements.find((e) => e.element === element) as
+      | Element<TElement, TValue>
+      | undefined;
 
-    if (!templateElement) {
-      templateElement = {
+    if (!existingElement) {
+      existingElement = {
         element: element,
         properties: new Map()
       };
-      this.templateElements.push(templateElement);
+      this.elements.push(existingElement);
     }
 
-    templateElement.properties.set(property, setCallback);
+    existingElement.properties.set(property, callback);
   }
 
-  unbindTemplateProperty<TElement extends HTMLElement>(
+  /**
+   * Unbinds the value of a `Value` from a property of an `HTMLElement`.
+   * When the value is updated, the property will no longer be updated.
+   *
+   * This function does not clear the property's value.
+   *
+   * @param element An `HTMLElement`.
+   * @param property A property of the provided `HTMLElement`.
+   */
+  unbindElementProperty<TElement extends HTMLElement>(
     element: TElement,
     property: keyof TElement
   ) {
-    let templateElementIndex = this.templateElements.findIndex(
-      (existingTemplateElement) => existingTemplateElement.element === element
-    );
+    let elementIndex = this.elements.findIndex((e) => e.element === element);
 
-    if (templateElementIndex === -1) return;
+    if (elementIndex === -1) return;
 
-    const properties = this.templateElements[templateElementIndex]
-      .properties as Map<keyof TElement, (value: TValue) => any>;
+    const properties = this.elements[elementIndex].properties as Map<
+      keyof TElement,
+      (value: TValue) => any
+    >;
 
     if (properties.delete(property) && properties.size === 0) {
-      this.templateElements.splice(templateElementIndex, 1);
+      this.elements.splice(elementIndex, 1);
     }
   }
 
-  unbindTemplateProperties() {
-    this.templateElements.length = 0;
+  /**
+   * Unbinds the value of a `Value` from all bound properties.
+   * When the value is updated, no property will be updated.
+   */
+  unbindAllElementProperties() {
+    this.elements.length = 0;
   }
 }
