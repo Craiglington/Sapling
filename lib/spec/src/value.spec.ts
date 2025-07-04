@@ -38,6 +38,29 @@ describe("Value", () => {
     expect(header.hidden).toBeFalse();
   });
 
+  it("should bind a property on an HTMLElement while setting with the set method", () => {
+    expect(value["elements"].length).toBe(0);
+    value.bindElementProperty(header, "innerText");
+    expect(value["elements"].length).toBe(1);
+    expect(header.innerText).toBe("Hello world!");
+    value.set((currentValue) => currentValue + "!");
+    expect(header.innerText).toBe("Hello world!!");
+  });
+
+  it("should bind multiple properties on an HTMLElement while setting with the set method", () => {
+    value.bindElementProperty(header, "innerText");
+    value.bindElementProperty(
+      header,
+      "hidden",
+      (value) => value === "Hello world!"
+    );
+    expect(header.innerText).toBe("Hello world!");
+    expect(header.hidden).toBeTrue();
+    value.set((currentValue) => currentValue + "!");
+    expect(header.innerText).toBe("Hello world!!");
+    expect(header.hidden).toBeFalse();
+  });
+
   it("should bind multiple properties on multiple HTMLElements", () => {
     expect(value["elements"].length).toBe(0);
     value.value = "test";

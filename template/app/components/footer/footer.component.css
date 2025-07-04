@@ -1,9 +1,5 @@
-#login-component {
+#footer-component {
   display: flex;
   flex-direction: column;
   align-items: center;
-}
-
-:host {
-  flex: 1 1 auto;
 }

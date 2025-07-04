@@ -1,7 +1,8 @@
 import { Component } from "/simple-web-client/component.js";
-import { env } from "../../envs/env.js";
+import { Value } from "/simple-web-client/value.js";
 
-class LoginComponent extends Component {
+export class LoginComponent extends Component {
+  textHidden = new Value(false);
   constructor() {
     super({
       templateUrl: "/components/login/login.component.html",
@@ -10,7 +11,11 @@ class LoginComponent extends Component {
   }
 
   override async connectedCallback() {
-    super.connectedCallback();
+    await super.connectedCallback();
+    const paragraph = this.shadowRoot?.querySelector("p");
+    if (paragraph) {
+      this.textHidden.bindTemplateProperty(paragraph, "hidden");
+    }
   }
 }
 

@@ -1,8 +1,8 @@
-type Callback<T> = ((value: T) => any) | undefined;
+type PropertyCallback<T> = ((value: T) => any) | undefined;
 
 type Element<TElement extends HTMLElement, TValue> = {
   element: TElement;
-  properties: Map<keyof TElement, Callback<TValue>>;
+  properties: Map<keyof TElement, PropertyCallback<TValue>>;
 };
 
 /**
@@ -32,7 +32,21 @@ export class Value<TValue> {
     this.updateElementProperties();
   }
 
-  private updateElementProperties() {
+  /**
+   * Sets the current value of a `Value` using a callback and updates all bound properties.
+   * @param callback A callback that is provided with the current value and must return a value of the same type.
+   */
+  set(callback: (value: TValue) => TValue) {
+    this._value = callback(this._value);
+    this.updateElementProperties();
+  }
+
+  /**
+   * Updates all bound properties with the current value of a `Value`.
+   *
+   * This method is automatically called when using the setter or the `set` method.
+   */
+  updateElementProperties() {
     for (const templateElement of this.elements) {
       for (const property of templateElement.properties.entries()) {
         this.setElementProperty(
@@ -47,7 +61,7 @@ export class Value<TValue> {
   private setElementProperty<TElement extends HTMLElement>(
     element: TElement,
     property: keyof TElement,
-    callback: Callback<TValue>
+    callback: PropertyCallback<TValue>
   ) {
     try {
       (element as any)[property] = callback
@@ -70,7 +84,7 @@ export class Value<TValue> {
   bindElementProperty<TElement extends HTMLElement>(
     element: TElement,
     property: keyof TElement,
-    callback?: Callback<TValue>
+    callback?: PropertyCallback<TValue>
   ) {
     this.setElementProperty(element, property, callback);
 

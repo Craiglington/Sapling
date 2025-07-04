@@ -1,7 +1,10 @@
-:host {
-  display: flow-root;
+#header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
-.header-component {
-  color: green;
+#title {
+  font-size: x-large;
+  font-weight: bold;
 }

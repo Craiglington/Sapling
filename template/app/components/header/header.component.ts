@@ -1,9 +1,7 @@
 import { Component } from "/simple-web-client/component.js";
-import { Value } from "/simple-web-client/value.js";
+import { RouterService } from "/simple-web-client/router.js";
 
-class HeaderComponent extends Component {
-  message = new Value("Hello world!");
-
+export class HeaderComponent extends Component {
   constructor() {
     super({
       templateUrl: "/components/header/header.component.html",
@@ -13,9 +11,22 @@ class HeaderComponent extends Component {
 
   override async connectedCallback() {
     await super.connectedCallback();
-    const header = this.shadowRoot?.querySelector("h1");
-    if (header) {
-      this.message.bindTemplateProperty(header, "innerText", (value) => value);
+    const loginLink = this.shadowRoot?.querySelector("#login-link");
+    if (loginLink) {
+      loginLink.addEventListener("click", (event: Event) => {
+        event.preventDefault();
+        console.log("Login clicked!");
+        RouterService.route("/login");
+      });
+    }
+
+    const aboutUsLink = this.shadowRoot?.querySelector("#about-us-link");
+    if (aboutUsLink) {
+      aboutUsLink.addEventListener("click", (event: Event) => {
+        event.preventDefault();
+        console.log("About Us clicked!");
+        RouterService.route("/about-us");
+      });
     }
   }
 }
