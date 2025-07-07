@@ -1,31 +1,23 @@
 import { Subject } from "./subject.js";
 import { Subscriber, Subscription } from "./observable.js";
 
-export class State {
-  private static state: Record<string, Subject<any>> = {};
+export class State<T extends { [key: string]: any }> {
+  private state: { [K in keyof T]: Subject<T[K]> } = {} as any;
 
-  static hasSlice(name: string): boolean {
-    return name in this.state;
+  constructor(initial: T) {
+    for (const key in initial) {
+      this.state[key] = new Subject(initial[key]);
+    }
   }
 
-  static addSlice<T>(name: string, initialValue: T) {
-    if (this.hasSlice(name)) {
-      throw new Error(`A slice named "${name}" already exists.`);
-    }
-    this.state[name] = new Subject(initialValue);
+  subscribe<K extends keyof T>(
+    key: K,
+    subscriber: Subscriber<T[K]>
+  ): Subscription {
+    return this.state[key].subscribe(subscriber);
   }
 
-  static subscribe<T>(name: string, subscriber: Subscriber<T>): Subscription {
-    if (!this.hasSlice(name)) {
-      throw new Error(`A slice named "${name}" does not exist.`);
-    }
-    return this.state[name].subscribe(subscriber);
-  }
-
-  static dispatch<T>(name: string, value: T) {
-    if (!this.hasSlice(name)) {
-      throw new Error(`A slice named "${name}" does not exist.`);
-    }
-    this.state[name].emit(value);
+  dispatch<K extends keyof T>(key: K, value: T[K]) {
+    this.state[key].emit(value);
   }
 }
