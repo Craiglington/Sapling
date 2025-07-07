@@ -1,4 +1,4 @@
-type Callback<T> = ((value: T) => any) | undefined;
+type PropertyCallback<T> = ((value: T) => any) | undefined;
 /**
  * A `Value` is a wrapper for any type of variable.
  * A `Value` is useful because it allows for one-way binding to `HTMLElement` properties.
@@ -15,7 +15,17 @@ export declare class Value<TValue> {
      * Sets the current value of a `Value` and updates all bound properties.
      */
     set value(value: TValue);
-    private updateElementProperties;
+    /**
+     * Sets the current value of a `Value` using a callback and updates all bound properties.
+     * @param callback A callback that is provided with the current value and must return a value of the same type.
+     */
+    set(callback: (value: TValue) => TValue): void;
+    /**
+     * Updates all bound properties with the current value of a `Value`.
+     *
+     * This method is automatically called when using the setter or the `set` method.
+     */
+    updateElementProperties(): void;
     private setElementProperty;
     /**
      * Binds the value of a `Value` to a property of an `HTMLElement`.
@@ -26,7 +36,7 @@ export declare class Value<TValue> {
      * @param property A property of the provided `HTMLElement`.
      * @param callback A function that is passed the value and returns the property's value.
      */
-    bindElementProperty<TElement extends HTMLElement>(element: TElement, property: keyof TElement, callback?: Callback<TValue>): void;
+    bindElementProperty<TElement extends HTMLElement>(element: TElement, property: keyof TElement, callback?: PropertyCallback<TValue>): void;
     /**
      * Unbinds the value of a `Value` from a property of an `HTMLElement`.
      * When the value is updated, the property will no longer be updated.

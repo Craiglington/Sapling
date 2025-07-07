@@ -21,6 +21,19 @@ export class Value {
         this._value = value;
         this.updateElementProperties();
     }
+    /**
+     * Sets the current value of a `Value` using a callback and updates all bound properties.
+     * @param callback A callback that is provided with the current value and must return a value of the same type.
+     */
+    set(callback) {
+        this._value = callback(this._value);
+        this.updateElementProperties();
+    }
+    /**
+     * Updates all bound properties with the current value of a `Value`.
+     *
+     * This method is automatically called when using the setter or the `set` method.
+     */
     updateElementProperties() {
         for (const templateElement of this.elements) {
             for (const property of templateElement.properties.entries()) {
