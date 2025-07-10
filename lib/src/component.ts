@@ -1,10 +1,4 @@
-/**
- * All urls should consider the `app` directory as the root directory.
- */
-export type ComponentConfig = {
-  templateUrl: string;
-  styleUrls?: string[];
-};
+import { Subject } from "./subject.js";
 
 /**
  * A `Component` is an extension of an `HTMLElement`. It can be extended to create custom HTML elements.
@@ -30,21 +24,37 @@ export type ComponentConfig = {
  *
  * See https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements#custom_element_lifecycle_callbacks for details on lifecycle events.
  */
-export class Component extends HTMLElement {
+export class Component<
+  T extends { [key: string]: any } = {}
+> extends HTMLElement {
   static observedAttributes = [];
   private static globalStyleSheets: string[] = ["/styles.css"];
   private static savedTemplates: Record<string, string> = {};
   private static savedStyles: Record<string, CSSStyleSheet> = {};
 
-  private config: ComponentConfig;
+  private templateUrl: string;
+  private styleUrls: string[];
   private getTemplatePromise: Promise<string>;
   private getStyleSheetsPromise: Promise<CSSStyleSheet[]>;
+  protected inputs: { [K in keyof T]: Subject<T[K]> } = {} as any;
 
-  constructor(config: ComponentConfig) {
+  constructor(config: {
+    templateUrl: string;
+    styleUrls?: string[];
+    inputs?: T;
+  }) {
     super();
-    this.config = config;
+    this.templateUrl = config.templateUrl;
+    this.styleUrls = config.styleUrls || [];
+
     this.getTemplatePromise = this.getTemplate();
     this.getStyleSheetsPromise = this.getStyleSheets();
+
+    if (config.inputs) {
+      for (const key in config.inputs) {
+        this.inputs[key] = new Subject(config.inputs[key]);
+      }
+    }
   }
 
   /**
@@ -54,6 +64,15 @@ export class Component extends HTMLElement {
    */
   static addGlobalStyleSheet(url: string) {
     Component.globalStyleSheets.push(url);
+  }
+
+  /**
+   * Used to communicate to a child component. Set the value of an input.
+   * @param key The input's key.
+   * @param value The new value of the input.
+   */
+  setInput<K extends keyof T>(key: K, value: T[K]) {
+    this.inputs[key].emit(value);
   }
 
   /**
@@ -90,18 +109,18 @@ export class Component extends HTMLElement {
 
   private getTemplate(): Promise<string> {
     return new Promise<string>((resolve) => {
-      if (Component.savedTemplates[this.config.templateUrl]) {
-        resolve(Component.savedTemplates[this.config.templateUrl]);
+      if (Component.savedTemplates[this.templateUrl]) {
+        resolve(Component.savedTemplates[this.templateUrl]);
         return;
       }
-      this.fetchFile(this.config.templateUrl)
+      this.fetchFile(this.templateUrl)
         .then((response) => {
-          Component.savedTemplates[this.config.templateUrl] = response;
+          Component.savedTemplates[this.templateUrl] = response;
           resolve(response);
         })
         .catch((error: Error) => {
           console.error(
-            `Failed to fetch template at ${this.config.templateUrl}: `,
+            `Failed to fetch template at ${this.templateUrl}: `,
             error
           );
           resolve("");
@@ -110,18 +129,16 @@ export class Component extends HTMLElement {
   }
 
   private async getStyleSheets(): Promise<CSSStyleSheet[]> {
-    const styleUrls = Component.globalStyleSheets.concat(
-      this.config.styleUrls || []
-    );
+    const allStyleUrls = Component.globalStyleSheets.concat(this.styleUrls);
 
-    if (styleUrls.length === 0) {
+    if (allStyleUrls.length === 0) {
       return [];
     }
 
     const promises: Promise<void>[] = [];
     const sheets: CSSStyleSheet[] = [];
 
-    for (const styleUrl of styleUrls) {
+    for (const styleUrl of allStyleUrls) {
       if (Component.savedStyles[styleUrl]) {
         sheets.push(Component.savedStyles[styleUrl]);
         continue;

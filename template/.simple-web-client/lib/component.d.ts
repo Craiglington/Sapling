@@ -1,10 +1,4 @@
-/**
- * All urls should consider the `app` directory as the root directory.
- */
-export type ComponentConfig = {
-    templateUrl: string;
-    styleUrls?: string[];
-};
+import { Subject } from "./subject.js";
 /**
  * A `Component` is an extension of an `HTMLElement`. It can be extended to create custom HTML elements.
  * When creating a `Component`, paths to an `.html` file and `.css` files should be provided.
@@ -29,21 +23,37 @@ export type ComponentConfig = {
  *
  * See https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements#custom_element_lifecycle_callbacks for details on lifecycle events.
  */
-export declare class Component extends HTMLElement {
+export declare class Component<T extends {
+    [key: string]: any;
+} = {}> extends HTMLElement {
     static observedAttributes: never[];
     private static globalStyleSheets;
     private static savedTemplates;
     private static savedStyles;
-    private config;
+    private templateUrl;
+    private styleUrls;
     private getTemplatePromise;
     private getStyleSheetsPromise;
-    constructor(config: ComponentConfig);
+    protected inputs: {
+        [K in keyof T]: Subject<T[K]>;
+    };
+    constructor(config: {
+        templateUrl: string;
+        styleUrls?: string[];
+        inputs?: T;
+    });
     /**
      *
      * Using this method will only add a global stylesheet to Components not yet created.
      * @param url The url of the stylesheet. Ex: `/global.css`.
      */
     static addGlobalStyleSheet(url: string): void;
+    /**
+     * Used to communicate to a child component. Set the value of an input.
+     * @param key The input's key.
+     * @param value The new value of the input.
+     */
+    setInput<K extends keyof T>(key: K, value: T[K]): void;
     /**
      * This method is called once the element has been connected in the `DOM`.
      *

@@ -49,12 +49,18 @@ const mockFetch = async (input: RequestInfo | URL) => {
   });
 };
 
+const mockInput = {
+  title: "Hello world!",
+  value: 15
+};
+
 describe("Component", () => {
-  class TestComponent extends Component {
+  class TestComponent extends Component<typeof mockInput> {
     constructor() {
       super({
         templateUrl: template.url,
-        styleUrls: styleSheets.map((sheet) => sheet.url)
+        styleUrls: styleSheets.map((sheet) => sheet.url),
+        inputs: mockInput
       });
     }
   }
@@ -91,6 +97,9 @@ describe("Component", () => {
     expect(testComponent).toBeTruthy();
     expect(testComponent["getTemplatePromise"]).toBeTruthy();
     expect(testComponent["getStyleSheetsPromise"]).toBeTruthy();
+    expect(Object.keys(testComponent["inputs"]).length).toBe(
+      Object.keys(mockInput).length
+    );
   });
 
   it("should attach the shadow element in the connectedCallback", async () => {
@@ -122,6 +131,28 @@ describe("Component", () => {
     expect(window.fetch).toHaveBeenCalledTimes(
       1 + globalStyleSheets.length + styleSheets.length
     );
+  });
+
+  it("should use and update inputs", () => {
+    let title = "";
+    testComponent["inputs"].title.subscribe((value) => {
+      title = value;
+    });
+    expect(title).toBe(mockInput.title);
+
+    let value = 0;
+    testComponent["inputs"].value.subscribe((newValue) => {
+      value = newValue;
+    });
+    expect(value).toBe(mockInput.value);
+
+    testComponent.setInput("title", "New title!");
+    expect(title).not.toBe(mockInput.title);
+    expect(title).toBe("New title!");
+
+    testComponent.setInput("value", 10);
+    expect(value).not.toBe(mockInput.value);
+    expect(value).toBe(10);
   });
 });
 

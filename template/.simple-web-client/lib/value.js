@@ -43,9 +43,7 @@ export class Value {
     }
     setElementProperty(element, property, callback) {
         try {
-            element[property] = callback
-                ? callback(this._value)
-                : this._value;
+            element[property] = callback ? callback(this._value) : this._value;
         }
         catch (error) {
             console.error("Error while setting template element property: ", error);

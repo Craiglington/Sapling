@@ -1,3 +1,4 @@
+import { Subject } from "./subject.js";
 /**
  * A `Component` is an extension of an `HTMLElement`. It can be extended to create custom HTML elements.
  * When creating a `Component`, paths to an `.html` file and `.css` files should be provided.
@@ -27,14 +28,22 @@ export class Component extends HTMLElement {
     static globalStyleSheets = ["/styles.css"];
     static savedTemplates = {};
     static savedStyles = {};
-    config;
+    templateUrl;
+    styleUrls;
     getTemplatePromise;
     getStyleSheetsPromise;
+    inputs = {};
     constructor(config) {
         super();
-        this.config = config;
+        this.templateUrl = config.templateUrl;
+        this.styleUrls = config.styleUrls || [];
         this.getTemplatePromise = this.getTemplate();
         this.getStyleSheetsPromise = this.getStyleSheets();
+        if (config.inputs) {
+            for (const key in config.inputs) {
+                this.inputs[key] = new Subject(config.inputs[key]);
+            }
+        }
     }
     /**
      *
@@ -43,6 +52,14 @@ export class Component extends HTMLElement {
      */
     static addGlobalStyleSheet(url) {
         Component.globalStyleSheets.push(url);
+    }
+    /**
+     * Used to communicate to a child component. Set the value of an input.
+     * @param key The input's key.
+     * @param value The new value of the input.
+     */
+    setInput(key, value) {
+        this.inputs[key].emit(value);
     }
     /**
      * This method is called once the element has been connected in the `DOM`.
@@ -73,29 +90,29 @@ export class Component extends HTMLElement {
     connectedMoveCallback() { }
     getTemplate() {
         return new Promise((resolve) => {
-            if (Component.savedTemplates[this.config.templateUrl]) {
-                resolve(Component.savedTemplates[this.config.templateUrl]);
+            if (Component.savedTemplates[this.templateUrl]) {
+                resolve(Component.savedTemplates[this.templateUrl]);
                 return;
             }
-            this.fetchFile(this.config.templateUrl)
+            this.fetchFile(this.templateUrl)
                 .then((response) => {
-                Component.savedTemplates[this.config.templateUrl] = response;
+                Component.savedTemplates[this.templateUrl] = response;
                 resolve(response);
             })
                 .catch((error) => {
-                console.error(`Failed to fetch template at ${this.config.templateUrl}: `, error);
+                console.error(`Failed to fetch template at ${this.templateUrl}: `, error);
                 resolve("");
             });
         });
     }
     async getStyleSheets() {
-        const styleUrls = Component.globalStyleSheets.concat(this.config.styleUrls || []);
-        if (styleUrls.length === 0) {
+        const allStyleUrls = Component.globalStyleSheets.concat(this.styleUrls);
+        if (allStyleUrls.length === 0) {
             return [];
         }
         const promises = [];
         const sheets = [];
-        for (const styleUrl of styleUrls) {
+        for (const styleUrl of allStyleUrls) {
             if (Component.savedStyles[styleUrl]) {
                 sheets.push(Component.savedStyles[styleUrl]);
                 continue;
