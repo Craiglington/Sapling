@@ -7,7 +7,8 @@
     "start": "echo Run the tsc and docker scripts.",
     "tsc": "bash .simple-web-client/tsc.sh",
     "docker": "bash .simple-web-client/docker.sh",
-    "test": "npx jasmine-broswer-runner runSpecs",
+    "test": "npx tsc -p spec && npx jasmine-browser-runner runSpecs",
+    "test-serve": "npx tsc -p spec && npx jasmine-browser-runner serve",
     "prettier": "npx prettier . --write"
   },
   "repository": {

@@ -1,27 +1,9 @@
-import { RouterService } from "/simple-web-client/router.js";
-import { LoginComponent } from "./components/login/login.component.js";
-import { AboutUsComponent } from "./components/about-us/about-us.component.js";
-import "./components/header/header.component.js";
-import "./components/footer/footer.component.js";
+import { env } from "./envs/env.js";
 
-try {
-  RouterService.init({
-    routes: [
-      {
-        path: new RegExp(/^\/?$/),
-        redirectTo: "/login"
-      },
-      {
-        path: new RegExp(/^\/login.*$/),
-        component: LoginComponent
-      },
-      {
-        path: new RegExp(/^\/about-us.*$/),
-        component: AboutUsComponent
-      }
-    ],
-    notFound: LoginComponent
-  });
-} catch (error) {
-  console.error(error);
+// Needed for automatic browser reload.
+if (env.ENV === "DEV") {
+  const script = document.createElement("script");
+  script.setAttribute("type", "module");
+  script.src = "/client-listener.js";
+  document.body.append(script);
 }
