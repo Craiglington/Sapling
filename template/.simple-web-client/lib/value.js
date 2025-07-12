@@ -1,6 +1,6 @@
 /**
  * A `Value` is a wrapper for any type of variable.
- * A `Value` is useful because it allows for one-way binding to `HTMLElement` properties.
+ * A `Value` is useful because it allows for one-way binding to `Element` properties.
  */
 export class Value {
     _value;
@@ -50,12 +50,12 @@ export class Value {
         }
     }
     /**
-     * Binds the value of a `Value` to a property of an `HTMLElement`.
+     * Binds the value of a `Value` to a property of an `Element`.
      * When the value is updated, the property will be updated as well.
      *
      * Instead of simply setting the bound property to the value, an optional callback can be used to set the property based on the value.
-     * @param element An `HTMLElement`.
-     * @param property A property of the provided `HTMLElement`.
+     * @param element An `Element`.
+     * @param property A property of the provided `Element`.
      * @param callback A function that is passed the value and returns the property's value.
      */
     bindElementProperty(element, property, callback) {
@@ -71,13 +71,13 @@ export class Value {
         existingElement.properties.set(property, callback);
     }
     /**
-     * Unbinds the value of a `Value` from a property of an `HTMLElement`.
+     * Unbinds the value of a `Value` from a property of an `Element`.
      * When the value is updated, the property will no longer be updated.
      *
      * This function does not clear the property's value.
      *
-     * @param element An `HTMLElement`.
-     * @param property A property of the provided `HTMLElement`.
+     * @param element An `Element`.
+     * @param property A property of the provided `Element`.
      */
     unbindElementProperty(element, property) {
         let elementIndex = this.elements.findIndex((e) => e.element === element);

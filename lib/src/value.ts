@@ -1,17 +1,17 @@
 type PropertyCallback<T> = ((value: T) => any) | undefined;
 
-type Element<TElement extends HTMLElement, TValue> = {
+type ValueElement<TElement extends Element, TValue> = {
   element: TElement;
   properties: Map<keyof TElement, PropertyCallback<TValue>>;
 };
 
 /**
  * A `Value` is a wrapper for any type of variable.
- * A `Value` is useful because it allows for one-way binding to `HTMLElement` properties.
+ * A `Value` is useful because it allows for one-way binding to `Element` properties.
  */
 export class Value<TValue> {
   private _value: TValue;
-  private elements: Element<any, TValue>[] = [];
+  private elements: ValueElement<any, TValue>[] = [];
 
   constructor(value: TValue) {
     this._value = value;
@@ -58,7 +58,7 @@ export class Value<TValue> {
     }
   }
 
-  private setElementProperty<TElement extends HTMLElement>(
+  private setElementProperty<TElement extends Element>(
     element: TElement,
     property: keyof TElement,
     callback: PropertyCallback<TValue>
@@ -71,15 +71,15 @@ export class Value<TValue> {
   }
 
   /**
-   * Binds the value of a `Value` to a property of an `HTMLElement`.
+   * Binds the value of a `Value` to a property of an `Element`.
    * When the value is updated, the property will be updated as well.
    *
    * Instead of simply setting the bound property to the value, an optional callback can be used to set the property based on the value.
-   * @param element An `HTMLElement`.
-   * @param property A property of the provided `HTMLElement`.
+   * @param element An `Element`.
+   * @param property A property of the provided `Element`.
    * @param callback A function that is passed the value and returns the property's value.
    */
-  bindElementProperty<TElement extends HTMLElement>(
+  bindElementProperty<TElement extends Element>(
     element: TElement,
     property: keyof TElement,
     callback?: PropertyCallback<TValue>
@@ -87,7 +87,7 @@ export class Value<TValue> {
     this.setElementProperty(element, property, callback);
 
     let existingElement = this.elements.find((e) => e.element === element) as
-      | Element<TElement, TValue>
+      | ValueElement<TElement, TValue>
       | undefined;
 
     if (!existingElement) {
@@ -102,15 +102,15 @@ export class Value<TValue> {
   }
 
   /**
-   * Unbinds the value of a `Value` from a property of an `HTMLElement`.
+   * Unbinds the value of a `Value` from a property of an `Element`.
    * When the value is updated, the property will no longer be updated.
    *
    * This function does not clear the property's value.
    *
-   * @param element An `HTMLElement`.
-   * @param property A property of the provided `HTMLElement`.
+   * @param element An `Element`.
+   * @param property A property of the provided `Element`.
    */
-  unbindElementProperty<TElement extends HTMLElement>(
+  unbindElementProperty<TElement extends Element>(
     element: TElement,
     property: keyof TElement
   ) {
