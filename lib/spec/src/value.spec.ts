@@ -15,7 +15,7 @@ describe("Value", () => {
     expect(header).toBeTruthy();
   });
 
-  it("should bind a property on an HTMLElement", () => {
+  it("should bind a property on an Element", () => {
     expect(value["elements"].length).toBe(0);
     value.bindElementProperty(header, "innerText");
     expect(value["elements"].length).toBe(1);
@@ -24,7 +24,26 @@ describe("Value", () => {
     expect(header.innerText).toBe("New value!");
   });
 
-  it("should bind multiple properties on an HTMLElement", () => {
+  it("should bind an attribute on an Element", () => {
+    expect(value["elements"].length).toBe(0);
+    value.bindElementAttribute(header, "id");
+    expect(value["elements"].length).toBe(1);
+    expect(header.getAttribute("id")).toBe("Hello world!");
+    value.value = "New value!";
+    expect(header.getAttribute("id")).toBe("New value!");
+  });
+
+  it("should bind a non-string value to an attribute on an Element", () => {
+    const numValue = new Value(12);
+    expect(numValue["elements"].length).toBe(0);
+    numValue.bindElementAttribute(header, "id");
+    expect(numValue["elements"].length).toBe(1);
+    expect(header.getAttribute("id")).toBe("12");
+    numValue.value = 15;
+    expect(header.getAttribute("id")).toBe("15");
+  });
+
+  it("should bind multiple properties on an Element", () => {
     value.bindElementProperty(header, "innerText");
     value.bindElementProperty(
       header,
@@ -38,7 +57,19 @@ describe("Value", () => {
     expect(header.hidden).toBeFalse();
   });
 
-  it("should bind a property on an HTMLElement while setting with the set method", () => {
+  it("should bind multiple attributes on an Element", () => {
+    value.bindElementAttribute(header, "id");
+    value.bindElementAttribute(header, "title", (value) =>
+      value === "Hello world!" ? "true" : "false"
+    );
+    expect(header.getAttribute("id")).toBe("Hello world!");
+    expect(header.getAttribute("title")).toBe("true");
+    value.value = "New value!";
+    expect(header.getAttribute("id")).toBe("New value!");
+    expect(header.getAttribute("title")).toBe("false");
+  });
+
+  it("should bind a property on an Element while setting with the set method", () => {
     expect(value["elements"].length).toBe(0);
     value.bindElementProperty(header, "innerText");
     expect(value["elements"].length).toBe(1);
@@ -47,7 +78,16 @@ describe("Value", () => {
     expect(header.innerText).toBe("Hello world!!");
   });
 
-  it("should bind multiple properties on an HTMLElement while setting with the set method", () => {
+  it("should bind an attribute on an Element while setting with the set method", () => {
+    expect(value["elements"].length).toBe(0);
+    value.bindElementAttribute(header, "id");
+    expect(value["elements"].length).toBe(1);
+    expect(header.getAttribute("id")).toBe("Hello world!");
+    value.set((currentValue) => currentValue + "!");
+    expect(header.getAttribute("id")).toBe("Hello world!!");
+  });
+
+  it("should bind multiple properties on an Element while setting with the set method", () => {
     value.bindElementProperty(header, "innerText");
     value.bindElementProperty(
       header,
@@ -61,7 +101,19 @@ describe("Value", () => {
     expect(header.hidden).toBeFalse();
   });
 
-  it("should bind multiple properties on multiple HTMLElements", () => {
+  it("should bind multiple attributes on an Element while setting with the set method", () => {
+    value.bindElementAttribute(header, "id");
+    value.bindElementAttribute(header, "title", (value) =>
+      value === "Hello world!" ? "true" : "false"
+    );
+    expect(header.getAttribute("id")).toBe("Hello world!");
+    expect(header.getAttribute("title")).toBe("true");
+    value.set((currentValue) => currentValue + "!");
+    expect(header.getAttribute("id")).toBe("Hello world!!");
+    expect(header.getAttribute("title")).toBe("false");
+  });
+
+  it("should bind multiple properties on multiple Elements", () => {
     expect(value["elements"].length).toBe(0);
     value.value = "test";
     value.bindElementProperty(header, "innerText");
@@ -92,6 +144,35 @@ describe("Value", () => {
     expect(link.href).toBe("https://test.com/new-test");
   });
 
+  it("should bind multiple attributes on multiple Elements", () => {
+    expect(value["elements"].length).toBe(0);
+    value.value = "test";
+    value.bindElementAttribute(header, "id");
+    value.bindElementAttribute(header, "title", (value) =>
+      value === "new-test" ? "true" : "false"
+    );
+    expect(header.getAttribute("id")).toBe("test");
+    expect(header.getAttribute("title")).toBe("false");
+    expect(value["elements"].length).toBe(1);
+
+    const link = document.createElement("a");
+    value.bindElementAttribute(link, "id");
+    value.bindElementAttribute(
+      link,
+      "href",
+      (value) => `https://test.com/${value}`
+    );
+    expect(link.getAttribute("id")).toBe("test");
+    expect(link.getAttribute("href")).toBe("https://test.com/test");
+    expect(value["elements"].length).toBe(2);
+
+    value.value = "new-test";
+    expect(header.getAttribute("id")).toBe("new-test");
+    expect(header.getAttribute("title")).toBe("true");
+    expect(link.getAttribute("id")).toBe("new-test");
+    expect(link.getAttribute("href")).toBe("https://test.com/new-test");
+  });
+
   it("should unbind a template property", () => {
     spyOn(value["elements"], "splice").and.callThrough();
     value.bindElementProperty(header, "innerText");
@@ -119,6 +200,31 @@ describe("Value", () => {
     expect(value["elements"].splice).toHaveBeenCalledTimes(1);
   });
 
+  it("should unbind a template attribute", () => {
+    spyOn(value["elements"], "splice").and.callThrough();
+    value.bindElementAttribute(header, "id");
+    value.bindElementAttribute(header, "title", (value) =>
+      value === "Hello world!" ? "true" : "false"
+    );
+    expect(header.getAttribute("id")).toBe("Hello world!");
+    expect(header.getAttribute("title")).toBe("true");
+
+    value.unbindElementAttribute(header, "title");
+
+    value.value = "new value";
+    expect(header.getAttribute("id")).toBe("new value");
+    expect(header.getAttribute("title")).toBe("true");
+
+    expect(value["elements"].length).toBe(1);
+    value.unbindElementAttribute(header, "id");
+    expect(value["elements"].length).toBe(0);
+
+    value.value = "new value 2";
+    expect(header.getAttribute("id")).toBe("new value");
+    expect(header.getAttribute("title")).toBe("true");
+    expect(value["elements"].splice).toHaveBeenCalledTimes(1);
+  });
+
   it("should do nothing if unbinding a property that does not exist", () => {
     value.bindElementProperty(header, "innerText");
     spyOn(value["elements"], "splice").and.callThrough();
@@ -126,18 +232,31 @@ describe("Value", () => {
     expect(value["elements"].splice).toHaveBeenCalledTimes(0);
   });
 
-  it("should unbind all properties", () => {
+  it("should do nothing if unbinding an attribute that does not exist", () => {
+    value.bindElementAttribute(header, "id");
+    spyOn(value["elements"], "splice").and.callThrough();
+    value.unbindElementAttribute(header, "title");
+    expect(value["elements"].splice).toHaveBeenCalledTimes(0);
+  });
+
+  it("should unbind all properties and attributes", () => {
     value.bindElementProperty(header, "innerText");
+    value.bindElementAttribute(header, "id");
     const link = document.createElement("a");
     value.bindElementProperty(link, "innerText");
+    value.bindElementAttribute(link, "id");
     expect(header.innerText).toBe("Hello world!");
+    expect(header.getAttribute("id")).toBe("Hello world!");
     expect(link.innerText).toBe("Hello world!");
+    expect(link.getAttribute("id")).toBe("Hello world!");
     expect(value["elements"].length).toBe(2);
 
-    value.unbindAllElementProperties();
+    value.unbindAllElementValues();
     value.value = "new value";
     expect(header.innerText).toBe("Hello world!");
+    expect(header.getAttribute("id")).toBe("Hello world!");
     expect(link.innerText).toBe("Hello world!");
+    expect(link.getAttribute("id")).toBe("Hello world!");
     expect(value["elements"].length).toBe(0);
   });
 });
