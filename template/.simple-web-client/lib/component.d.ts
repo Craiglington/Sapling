@@ -59,7 +59,7 @@ export declare class Component<T extends {
      * @param selectors A valid CSS selector.
      * @returns `undefined` if `shadowRoot` is not defined, `null` if the element is not found, or an `Element`.
      */
-    getChild<K extends keyof HTMLElementTagNameMap>(selectors: K): HTMLElementTagNameMap[K] | null | undefined;
+    getChild<E extends Element = Element>(selectors: string): E | null | undefined;
     /**
      * This method is called once the element has been connected in the `DOM`.
      *

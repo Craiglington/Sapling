@@ -80,9 +80,9 @@ export class Component<
    * @param selectors A valid CSS selector.
    * @returns `undefined` if `shadowRoot` is not defined, `null` if the element is not found, or an `Element`.
    */
-  getChild<K extends keyof HTMLElementTagNameMap>(
-    selectors: K
-  ): HTMLElementTagNameMap[K] | null | undefined {
+  getChild<E extends Element = Element>(
+    selectors: string
+  ): E | null | undefined {
     return this.shadowRoot?.querySelector(selectors);
   }
 
