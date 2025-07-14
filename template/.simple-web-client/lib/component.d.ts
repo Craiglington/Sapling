@@ -55,6 +55,12 @@ export declare class Component<T extends {
      */
     setInput<K extends keyof T>(key: K, value: T[K]): void;
     /**
+     * Queries the shadowRoot and returns a child.
+     * @param selectors A valid CSS selector.
+     * @returns `undefined` if `shadowRoot` is not defined, `null` if the element is not found, or an `Element`.
+     */
+    getChild<K extends keyof HTMLElementTagNameMap>(selectors: K): HTMLElementTagNameMap[K] | null | undefined;
+    /**
      * This method is called once the element has been connected in the `DOM`.
      *
      * Make sure to call `super.connectedCallback()` or `await super.connectedCallback()` if overriding.

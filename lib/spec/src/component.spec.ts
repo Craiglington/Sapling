@@ -154,6 +154,19 @@ describe("Component", () => {
     expect(value).not.toBe(mockInput.value);
     expect(value).toBe(10);
   });
+
+  it("should get a child from the shadowRoot", async () => {
+    const noShadowRoot = testComponent.getChild("a");
+    expect(noShadowRoot).toBeUndefined();
+
+    await testComponent.connectedCallback();
+
+    const header = testComponent.getChild("h1");
+    expect(header).toBeInstanceOf(HTMLHeadingElement);
+
+    const notPresent = testComponent.getChild("p");
+    expect(notPresent).toBeNull();
+  });
 });
 
 describe("Component with bad files", () => {

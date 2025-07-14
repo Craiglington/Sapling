@@ -62,6 +62,14 @@ export class Component extends HTMLElement {
         this.inputs[key].emit(value);
     }
     /**
+     * Queries the shadowRoot and returns a child.
+     * @param selectors A valid CSS selector.
+     * @returns `undefined` if `shadowRoot` is not defined, `null` if the element is not found, or an `Element`.
+     */
+    getChild(selectors) {
+        return this.shadowRoot?.querySelector(selectors);
+    }
+    /**
      * This method is called once the element has been connected in the `DOM`.
      *
      * Make sure to call `super.connectedCallback()` or `await super.connectedCallback()` if overriding.
