@@ -43,6 +43,15 @@ describe("Value", () => {
     expect(header.getAttribute("id")).toBe("15");
   });
 
+  it("should bind a class on an Element", () => {
+    expect(value["elements"].length).toBe(0);
+    value.bindElementClass(header, "bold", (value) => value === "Hello world!");
+    expect(value["elements"].length).toBe(1);
+    expect(header.classList.contains("bold")).toBeTrue();
+    value.value = "New value!";
+    expect(header.classList.contains("bold")).toBeFalse();
+  });
+
   it("should bind multiple properties on an Element", () => {
     value.bindElementProperty(header, "innerText");
     value.bindElementProperty(
@@ -85,6 +94,15 @@ describe("Value", () => {
     expect(header.getAttribute("id")).toBe("Hello world!");
     value.set((currentValue) => currentValue + "!");
     expect(header.getAttribute("id")).toBe("Hello world!!");
+  });
+
+  it("should bind a class on an Element while setting with the set method", () => {
+    expect(value["elements"].length).toBe(0);
+    value.bindElementClass(header, "bold", (value) => value === "Hello world!");
+    expect(value["elements"].length).toBe(1);
+    expect(header.classList.contains("bold")).toBeTrue();
+    value.set((currentValue) => currentValue + "!");
+    expect(header.classList.contains("bold")).toBeFalse();
   });
 
   it("should bind multiple properties on an Element while setting with the set method", () => {
@@ -225,6 +243,34 @@ describe("Value", () => {
     expect(value["elements"].splice).toHaveBeenCalledTimes(1);
   });
 
+  it("should unbind a template class", () => {
+    spyOn(value["elements"], "splice").and.callThrough();
+    value.bindElementClass(header, "bold", (value) => value === "Hello world!");
+    value.bindElementClass(
+      header,
+      "underlined",
+      (value) => value !== "Hello world!"
+    );
+
+    expect(header.classList.contains("bold")).toBeTrue();
+    expect(header.classList.contains("underlined")).toBeFalse();
+
+    value.unbindElementClass(header, "bold");
+
+    value.value = "new value";
+    expect(header.classList.contains("bold")).toBeTrue();
+    expect(header.classList.contains("underlined")).toBeTrue();
+
+    expect(value["elements"].length).toBe(1);
+    value.unbindElementClass(header, "underlined");
+    expect(value["elements"].length).toBe(0);
+
+    value.value = "Hello world!";
+    expect(header.classList.contains("bold")).toBeTrue();
+    expect(header.classList.contains("underlined")).toBeTrue();
+    expect(value["elements"].splice).toHaveBeenCalledTimes(1);
+  });
+
   it("should do nothing if unbinding a property that does not exist", () => {
     value.bindElementProperty(header, "innerText");
     spyOn(value["elements"], "splice").and.callThrough();
@@ -237,6 +283,27 @@ describe("Value", () => {
     spyOn(value["elements"], "splice").and.callThrough();
     value.unbindElementAttribute(header, "title");
     expect(value["elements"].splice).toHaveBeenCalledTimes(0);
+  });
+
+  it("should only remove an element if it has no more bindings", () => {
+    spyOn(value["elements"], "splice").and.callThrough();
+    expect(value["elements"].length).toBe(0);
+    value.bindElementProperty(header, "innerText");
+    value.bindElementAttribute(header, "id");
+    value.bindElementClass(header, "bold", () => true);
+    expect(value["elements"].length).toBe(1);
+
+    value.unbindElementProperty(header, "innerText");
+    expect(value["elements"].splice).toHaveBeenCalledTimes(0);
+    expect(value["elements"].length).toBe(1);
+
+    value.unbindElementAttribute(header, "id");
+    expect(value["elements"].splice).toHaveBeenCalledTimes(0);
+    expect(value["elements"].length).toBe(1);
+
+    value.unbindElementClass(header, "bold");
+    expect(value["elements"].splice).toHaveBeenCalledTimes(1);
+    expect(value["elements"].length).toBe(0);
   });
 
   it("should unbind all properties and attributes", () => {

@@ -30,17 +30,20 @@ export class Value {
         this.updateElementValues();
     }
     /**
-     * Updates all bound properties and attributes with the current value of a `Value`.
+     * Updates all bound properties, attributes, and classes with the current value of a `Value`.
      *
      * This method is automatically called when using the setter or the `set` method.
      */
     updateElementValues() {
         for (const templateElement of this.elements) {
-            for (const property of templateElement.properties.entries()) {
-                this.setElementProperty(templateElement.element, property[0], property[1]);
+            for (const propertyEntry of templateElement.properties.entries()) {
+                this.setElementProperty(templateElement.element, propertyEntry[0], propertyEntry[1]);
             }
-            for (const attribute of templateElement.attributes.entries()) {
-                this.setElementAttribute(templateElement.element, attribute[0], attribute[1]);
+            for (const attributeEntry of templateElement.attributes.entries()) {
+                this.setElementAttribute(templateElement.element, attributeEntry[0], attributeEntry[1]);
+            }
+            for (const classEntry of templateElement.classes.entries()) {
+                this.setElementClass(templateElement.element, classEntry[0], classEntry[1]);
             }
         }
     }
@@ -62,6 +65,19 @@ export class Value {
         }
         catch (error) {
             console.error("Error while setting template element attribute: ", error);
+        }
+    }
+    setElementClass(element, className, callback) {
+        try {
+            if (callback(this._value)) {
+                element.classList.add(className);
+            }
+            else {
+                element.classList.remove(className);
+            }
+        }
+        catch (error) {
+            console.error("Error while setting template element class: ", error);
         }
     }
     /**
@@ -92,13 +108,28 @@ export class Value {
         let existingElement = this.getValueElement(element);
         existingElement.attributes.set(attribute, callback);
     }
+    /**
+     * Binds the value of a `Value` to the presence of a class on an `Element`.
+     * A callback that returns a boolean is required.
+     * When the value is updated, the class will be updated as well.
+     *
+     * @param element An `Element`.
+     * @param attribute An attribute of the provided `Element`.
+     * @param callback A function that is passed the value and returns the attribute's value.
+     */
+    bindElementClass(element, className, callback) {
+        this.setElementClass(element, className, callback);
+        let existingElement = this.getValueElement(element);
+        existingElement.classes.set(className, callback);
+    }
     getValueElement(element) {
         let existingElement = this.elements.find((e) => e.element === element);
         if (!existingElement) {
             existingElement = {
                 element: element,
                 properties: new Map(),
-                attributes: new Map()
+                attributes: new Map(),
+                classes: new Map()
             };
             this.elements.push(existingElement);
         }
@@ -114,13 +145,7 @@ export class Value {
      * @param property A property of the provided `Element`.
      */
     unbindElementProperty(element, property) {
-        let elementIndex = this.elements.findIndex((e) => e.element === element);
-        if (elementIndex === -1)
-            return;
-        const properties = this.elements[elementIndex].properties;
-        if (properties.delete(property) && properties.size === 0) {
-            this.elements.splice(elementIndex, 1);
-        }
+        this.unbindElementValue(element, "properties", property);
     }
     /**
      * Unbinds the value of a `Value` from an attribute of an `Element`.
@@ -132,13 +157,33 @@ export class Value {
      * @param attribute An attribute of the provided `Element`.
      */
     unbindElementAttribute(element, attribute) {
+        this.unbindElementValue(element, "attributes", attribute);
+    }
+    /**
+     * Unbinds the value of a `Value` from the presence of a class on an `Element`.
+     * When the value is updated, the class will no longer be updated.
+     *
+     * This function does not remove the class from the element.
+     *
+     * @param element An `Element`.
+     * @param className A class of the provided `Element`.
+     */
+    unbindElementClass(element, className) {
+        this.unbindElementValue(element, "classes", className);
+    }
+    unbindElementValue(element, map, key) {
         let elementIndex = this.elements.findIndex((e) => e.element === element);
         if (elementIndex === -1)
             return;
-        const attributes = this.elements[elementIndex].attributes;
-        if (attributes.delete(attribute) && attributes.size === 0) {
+        const valueElement = this.elements[elementIndex];
+        if (valueElement[map].delete(key) && this.elementNotBound(valueElement)) {
             this.elements.splice(elementIndex, 1);
         }
+    }
+    elementNotBound(element) {
+        return (element.properties.size === 0 &&
+            element.attributes.size === 0 &&
+            element.classes.size === 0);
     }
     /**
      * Unbinds the value of a `Value` from all bound properties and attributes.

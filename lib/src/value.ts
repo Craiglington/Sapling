@@ -1,10 +1,12 @@
 type PropertyCallback<T> = ((value: T) => any) | undefined;
 type AttributeCallback<T> = ((value: T) => string) | undefined;
+type ClassCallback<T> = (value: T) => boolean;
 
 type ValueElement<TElement extends Element, TValue> = {
   element: TElement;
   properties: Map<keyof TElement, PropertyCallback<TValue>>;
   attributes: Map<string, AttributeCallback<TValue>>;
+  classes: Map<string, ClassCallback<TValue>>;
 };
 
 /**
@@ -44,24 +46,31 @@ export class Value<TValue> {
   }
 
   /**
-   * Updates all bound properties and attributes with the current value of a `Value`.
+   * Updates all bound properties, attributes, and classes with the current value of a `Value`.
    *
    * This method is automatically called when using the setter or the `set` method.
    */
   updateElementValues() {
     for (const templateElement of this.elements) {
-      for (const property of templateElement.properties.entries()) {
+      for (const propertyEntry of templateElement.properties.entries()) {
         this.setElementProperty(
           templateElement.element,
-          property[0],
-          property[1]
+          propertyEntry[0],
+          propertyEntry[1]
         );
       }
-      for (const attribute of templateElement.attributes.entries()) {
+      for (const attributeEntry of templateElement.attributes.entries()) {
         this.setElementAttribute(
           templateElement.element,
-          attribute[0],
-          attribute[1]
+          attributeEntry[0],
+          attributeEntry[1]
+        );
+      }
+      for (const classEntry of templateElement.classes.entries()) {
+        this.setElementClass(
+          templateElement.element,
+          classEntry[0],
+          classEntry[1]
         );
       }
     }
@@ -95,6 +104,22 @@ export class Value<TValue> {
       );
     } catch (error) {
       console.error("Error while setting template element attribute: ", error);
+    }
+  }
+
+  private setElementClass<TElement extends Element>(
+    element: TElement,
+    className: string,
+    callback: ClassCallback<TValue>
+  ) {
+    try {
+      if (callback(this._value)) {
+        element.classList.add(className);
+      } else {
+        element.classList.remove(className);
+      }
+    } catch (error) {
+      console.error("Error while setting template element class: ", error);
     }
   }
 
@@ -140,6 +165,27 @@ export class Value<TValue> {
     existingElement.attributes.set(attribute, callback);
   }
 
+  /**
+   * Binds the value of a `Value` to the presence of a class on an `Element`.
+   * A callback that returns a boolean is required.
+   * When the value is updated, the class will be updated as well.
+   *
+   * @param element An `Element`.
+   * @param attribute An attribute of the provided `Element`.
+   * @param callback A function that is passed the value and returns the attribute's value.
+   */
+  bindElementClass<TElement extends Element>(
+    element: TElement,
+    className: string,
+    callback: ClassCallback<TValue>
+  ) {
+    this.setElementClass(element, className, callback);
+
+    let existingElement = this.getValueElement(element);
+
+    existingElement.classes.set(className, callback);
+  }
+
   private getValueElement<TElement extends Element>(
     element: TElement
   ): ValueElement<TElement, TValue> {
@@ -151,7 +197,8 @@ export class Value<TValue> {
       existingElement = {
         element: element,
         properties: new Map(),
-        attributes: new Map()
+        attributes: new Map(),
+        classes: new Map()
       };
       this.elements.push(existingElement);
     }
@@ -172,15 +219,7 @@ export class Value<TValue> {
     element: TElement,
     property: keyof TElement
   ) {
-    let elementIndex = this.elements.findIndex((e) => e.element === element);
-
-    if (elementIndex === -1) return;
-
-    const properties = this.elements[elementIndex].properties;
-
-    if (properties.delete(property) && properties.size === 0) {
-      this.elements.splice(elementIndex, 1);
-    }
+    this.unbindElementValue(element, "properties", property as string);
   }
 
   /**
@@ -196,15 +235,47 @@ export class Value<TValue> {
     element: TElement,
     attribute: string
   ) {
+    this.unbindElementValue(element, "attributes", attribute);
+  }
+
+  /**
+   * Unbinds the value of a `Value` from the presence of a class on an `Element`.
+   * When the value is updated, the class will no longer be updated.
+   *
+   * This function does not remove the class from the element.
+   *
+   * @param element An `Element`.
+   * @param className A class of the provided `Element`.
+   */
+  unbindElementClass<TElement extends Element>(
+    element: TElement,
+    className: string
+  ) {
+    this.unbindElementValue(element, "classes", className);
+  }
+
+  private unbindElementValue<TElement extends Element>(
+    element: TElement,
+    map: keyof Omit<ValueElement<any, TValue>, "element">,
+    key: string
+  ) {
     let elementIndex = this.elements.findIndex((e) => e.element === element);
 
     if (elementIndex === -1) return;
 
-    const attributes = this.elements[elementIndex].attributes;
+    const valueElement = this.elements[elementIndex];
 
-    if (attributes.delete(attribute) && attributes.size === 0) {
+    if (valueElement[map].delete(key) && this.elementNotBound(valueElement)) {
       this.elements.splice(elementIndex, 1);
     }
+  }
+
+  private elementNotBound(element: ValueElement<any, TValue>): boolean {
+    return (
+      element.properties.size === 0 &&
+      element.attributes.size === 0 &&
+      element.classes.size === 0
+    );
   }
 
   /**
