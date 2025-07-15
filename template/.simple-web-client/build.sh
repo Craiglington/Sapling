@@ -34,6 +34,11 @@ mkdir dist/simple-web-client
 cp -r .simple-web-client/lib/* dist/simple-web-client
 find dist -name "*.ts" -type f -delete
 
+echo -e "\n${GREEN}-> Removing client listener${RESET}"
+if ! sed -i 's;<script type="module" src="/client-listener.js"></script>;;g' dist/index.html; then
+    echo -e "\n${RED}-> Failed to remove client listener${RESET}"
+fi
+
 echo -e "\n${GREEN}-> Replacing env file${RESET}"
 if ! mv dist/envs/env.build.js dist/envs/env.js; then
     echo -e "\n${RED}-> Failed to replace env file${RESET}"
