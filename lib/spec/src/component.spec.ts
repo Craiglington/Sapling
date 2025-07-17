@@ -3,7 +3,7 @@ import { Component } from "/__src__/component.js";
 type File = { url: string; content: string };
 const template: File = {
   url: "/template.html",
-  content: "<h1>Hello world!</h1>"
+  content: '<h1>Hello world!</h1><div id="content"></div>'
 };
 const styleSheets: File[] = [
   {
@@ -54,6 +54,150 @@ const mockInput = {
   value: 15
 };
 
+describe("Component with no shadow DOM", () => {
+  class TestNoShadowDOMComponent extends Component<typeof mockInput> {
+    constructor() {
+      super({
+        templateUrl: template.url,
+        styleUrls: styleSheets.map((sheet) => sheet.url),
+        attachShadowRoot: false
+      });
+    }
+  }
+  window.customElements.define(
+    "test-no-shadow-dom-component",
+    TestNoShadowDOMComponent
+  );
+
+  let testComponent: TestNoShadowDOMComponent;
+
+  beforeAll(() => {
+    Component["savedTemplates"] = {};
+    Component["savedStyles"] = {};
+    spyOn(window, "fetch").and.callFake(mockFetch);
+  });
+
+  beforeEach(() => {
+    testComponent = new TestNoShadowDOMComponent();
+    testComponent.hidden = true;
+    document.body.append(testComponent);
+  });
+
+  afterEach(async () => {
+    await Promise.all([
+      testComponent["getTemplatePromise"],
+      testComponent["getStyleSheetsPromise"]
+    ]);
+    testComponent.remove();
+  });
+
+  it("should insert the component into the document instead", async () => {
+    await testComponent.connectedCallback();
+
+    const content = testComponent.getChild("#content");
+    expect(content).toBeTruthy();
+    expect(content?.getRootNode()).toBe(document);
+  });
+});
+
+describe("Custom HTML component", () => {
+  class TestCustomHTMLComponent extends Component<typeof mockInput> {
+    constructor() {
+      super({
+        templateUrl: template.url,
+        styleUrls: styleSheets.map((sheet) => sheet.url),
+        insertSelector: "#content"
+      });
+    }
+  }
+  window.customElements.define(
+    "test-custom-html-component",
+    TestCustomHTMLComponent
+  );
+
+  let testComponent: TestCustomHTMLComponent;
+
+  beforeAll(() => {
+    Component["savedTemplates"] = {};
+    Component["savedStyles"] = {};
+    spyOn(window, "fetch").and.callFake(mockFetch);
+  });
+
+  beforeEach(() => {
+    testComponent = new TestCustomHTMLComponent();
+  });
+
+  afterEach(async () => {
+    await Promise.all([
+      testComponent["getTemplatePromise"],
+      testComponent["getStyleSheetsPromise"]
+    ]);
+  });
+
+  it("should insert existing HTML into the component", async () => {
+    const span = document.createElement("span");
+    span.id = "optionOne";
+    testComponent.appendChild(span);
+
+    await testComponent.connectedCallback();
+
+    const content = testComponent.getChild("#content");
+    expect(content).toBeTruthy();
+
+    const optionOne = testComponent.getChild(`#${span.id}`);
+    expect(optionOne).toBeTruthy();
+  });
+});
+
+describe("Custom HTML component with bad selector", () => {
+  class TestBadCustomHTMLComponent extends Component<typeof mockInput> {
+    constructor() {
+      super({
+        templateUrl: template.url,
+        styleUrls: styleSheets.map((sheet) => sheet.url),
+        insertSelector: "#bad"
+      });
+    }
+  }
+  window.customElements.define(
+    "test-bad-custom-html-component",
+    TestBadCustomHTMLComponent
+  );
+
+  let testComponent: TestBadCustomHTMLComponent;
+
+  beforeAll(() => {
+    Component["savedTemplates"] = {};
+    Component["savedStyles"] = {};
+    spyOn(window, "fetch").and.callFake(mockFetch);
+  });
+
+  beforeEach(() => {
+    testComponent = new TestBadCustomHTMLComponent();
+  });
+
+  afterEach(async () => {
+    await Promise.all([
+      testComponent["getTemplatePromise"],
+      testComponent["getStyleSheetsPromise"]
+    ]);
+  });
+
+  it("should not insert existing HTML into the component", async () => {
+    const span = document.createElement("span");
+    span.id = "optionOne";
+    testComponent.appendChild(span);
+
+    await testComponent.connectedCallback();
+
+    const content = testComponent.getChild("#content");
+    expect(content).toBeTruthy();
+
+    const optionOne = testComponent.getChild(`#${span.id}`);
+    expect(optionOne).toBeFalsy();
+  });
+});
+
 describe("Component", () => {
   class TestComponent extends Component<typeof mockInput> {
     constructor() {
@@ -64,7 +208,6 @@ describe("Component", () => {
       });
     }
   }
-
   window.customElements.define("test-component", TestComponent);
 
   let testComponent: TestComponent;
@@ -157,7 +300,7 @@ describe("Component", () => {
 
   it("should get a child from the shadowRoot", async () => {
     const noShadowRoot = testComponent.getChild("a");
-    expect(noShadowRoot).toBeUndefined();
+    expect(noShadowRoot).toBeNull();
 
     await testComponent.connectedCallback();
 

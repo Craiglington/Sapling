@@ -5,7 +5,7 @@ import { Subject } from "./subject.js";
  * All `Component` elements will receive styling from the `/styles.css` file. Other global style sheets can be added.
  *
  * For every custom `Component`, make sure to add it to the custom element registry.
- * This is what allows for the custom `Component` to be used in an `.html` file.
+ * This is what allows for the custom component to be used in an `.html` file.
  *
  * For example:
  * ```
@@ -21,6 +21,27 @@ import { Subject } from "./subject.js";
  * window.customElements.define("test-component", TestComponent);
  * ```
  *
+ * There are several optional configuration options for a `Component`.
+ * - `inputs`
+ *   - Key value pairs used to create `Subjects` during `Component` construction.
+ * The `Subjects` can be subscribed to from within the component and can be set from a parent component.
+ * - `attachShadowRoot`
+ *   - Whether or not this component should be inserted into its own shadow DOM.
+ * If `false`, this component will be inserted into its parent component's shadow DOM. If not provided, defaults to `true`.
+ * - `insertSelector`
+ *   - If provided, a component instance with existing HTML inside it will have that HTML inserted into an element in the template with a matching CSS selector.
+ * This allows for a parent component to provide custom HTML to a child component within the parent component's template.
+ *    - Example:
+ *       ```
+ *       // Custom component instance in a template
+ *       <app-menu>
+ *         // Custom html that will be inserted into the custom component's instance
+ *         <span>Home</span>
+ *         <span>Login</span>
+ *         <span>Logout</span>
+ *       </app-menu>
+ *       ```
+ *
  * See https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements#custom_element_lifecycle_callbacks for details on lifecycle events.
  */
 export class Component extends HTMLElement {
@@ -33,8 +54,13 @@ export class Component extends HTMLElement {
     getTemplatePromise;
     getStyleSheetsPromise;
     inputs = {};
+    attachShadowRoot;
+    insertSelector;
     constructor(config) {
         super();
+        this.attachShadowRoot =
+            config.attachShadowRoot !== undefined ? config.attachShadowRoot : true;
+        this.insertSelector = config.insertSelector;
         this.templateUrl = config.templateUrl;
         this.styleUrls = config.styleUrls || [];
         this.getTemplatePromise = this.getTemplate();
@@ -62,12 +88,14 @@ export class Component extends HTMLElement {
         this.inputs[key].emit(value);
     }
     /**
-     * Queries the shadowRoot and returns a child.
+     * Queries the component and returns a child.
      * @param selectors A valid CSS selector.
-     * @returns `undefined` if `shadowRoot` is not defined, `null` if the element is not found, or an `Element`.
+     * @returns `null` if the element is not found or an `Element`.
      */
     getChild(selectors) {
-        return this.shadowRoot?.querySelector(selectors);
+        return this.attachShadowRoot
+            ? this.shadowRoot?.querySelector(selectors) || null
+            : this.querySelector(selectors);
     }
     /**
      * This method is called once the element has been connected in the `DOM`.
@@ -78,17 +106,35 @@ export class Component extends HTMLElement {
      * https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements#custom_element_lifecycle_callbacks
      */
     async connectedCallback() {
-        this.attachShadow({ mode: "open" });
-        if (!this.shadowRoot) {
-            return;
-        }
+        const existingHTML = this.innerHTML;
+        this.innerHTML = "";
         const fetchResults = await Promise.all([
             this.getTemplatePromise,
             this.getStyleSheetsPromise
         ]);
-        this.shadowRoot.innerHTML += fetchResults[0];
-        this.shadowRoot.adoptedStyleSheets =
-            this.shadowRoot.adoptedStyleSheets.concat(fetchResults[1]);
+        if (this.attachShadowRoot) {
+            this.attachShadow({ mode: "open" });
+            if (!this.shadowRoot) {
+                throw new Error("Failed to attach a shadow DOM to the component.");
+            }
+            this.shadowRoot.innerHTML += fetchResults[0];
+            this.shadowRoot.adoptedStyleSheets =
+                this.shadowRoot.adoptedStyleSheets.concat(fetchResults[1]);
+        }
+        else {
+            this.innerHTML += fetchResults[0];
+            const root = this.getRootNode();
+            root.adoptedStyleSheets = root.adoptedStyleSheets.concat(fetchResults[1]);
+        }
+        if (this.insertSelector && existingHTML) {
+            this.insertExistingHTML(this.insertSelector, existingHTML);
+        }
+    }
+    insertExistingHTML(selector, html) {
+        const insertElement = this.getChild(selector);
+        if (insertElement) {
+            insertElement.innerHTML += html;
+        }
     }
     /**
      * Provided as suggested by `mdn web docs`.
