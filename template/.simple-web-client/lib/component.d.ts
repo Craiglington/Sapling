@@ -86,6 +86,12 @@ export declare class Component<T extends {
      */
     getChild<E extends Element = Element>(selectors: string): E | null;
     /**
+     * Queries the component and returns a list of child.
+     * @param selectors A valid CSS selector.
+     * @returns `null` if the element is not found or a list of `Elements`.
+     */
+    getChildren<E extends Element = Element>(selectors: string): NodeListOf<E> | null;
+    /**
      * This method is called once the element has been connected in the `DOM`.
      *
      * Make sure to call `super.connectedCallback()` or `await super.connectedCallback()` if overriding.

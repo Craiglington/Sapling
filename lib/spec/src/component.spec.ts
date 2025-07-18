@@ -310,6 +310,15 @@ describe("Component", () => {
     const notPresent = testComponent.getChild("p");
     expect(notPresent).toBeNull();
   });
+
+  it("should get children from the shadowRoot", async () => {
+    await testComponent.connectedCallback();
+
+    const children = testComponent.getChildren("*");
+    console.log(children);
+    expect(children).toBeTruthy();
+    expect(children?.length).toBe(2);
+  });
 });
 
 describe("Component with bad files", () => {
