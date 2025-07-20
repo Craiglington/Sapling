@@ -72,8 +72,8 @@ describe("Component with no shadow DOM", () => {
   let testComponent: TestNoShadowDOMComponent;
 
   beforeAll(() => {
-    Component["savedTemplates"] = {};
-    Component["savedStyles"] = {};
+    Component["savedTemplates"] = new Map();
+    Component["savedStyles"] = new Map();
     spyOn(window, "fetch").and.callFake(mockFetch);
   });
 
@@ -84,10 +84,14 @@ describe("Component with no shadow DOM", () => {
   });
 
   afterEach(async () => {
-    await Promise.all([
-      testComponent["getTemplatePromise"],
-      testComponent["getStyleSheetsPromise"]
-    ]);
+    await Component["savedTemplates"].get(testComponent["templateUrl"]);
+    await Promise.all(
+      testComponent["styleUrls"]
+        .map((styleUrl: string) => Component["savedStyles"].get(styleUrl))
+        .filter(
+          (style: Promise<CSSStyleSheet> | undefined) => style !== undefined
+        )
+    );
     testComponent.remove();
   });
 
@@ -118,8 +122,8 @@ describe("Custom HTML component", () => {
   let testComponent: TestCustomHTMLComponent;
 
   beforeAll(() => {
-    Component["savedTemplates"] = {};
-    Component["savedStyles"] = {};
+    Component["savedTemplates"] = new Map();
+    Component["savedStyles"] = new Map();
     spyOn(window, "fetch").and.callFake(mockFetch);
   });
 
@@ -128,10 +132,14 @@ describe("Custom HTML component", () => {
   });
 
   afterEach(async () => {
-    await Promise.all([
-      testComponent["getTemplatePromise"],
-      testComponent["getStyleSheetsPromise"]
-    ]);
+    await Component["savedTemplates"].get(testComponent["templateUrl"]);
+    await Promise.all(
+      testComponent["styleUrls"]
+        .map((styleUrl: string) => Component["savedStyles"].get(styleUrl))
+        .filter(
+          (style: Promise<CSSStyleSheet> | undefined) => style !== undefined
+        )
+    );
   });
 
   it("should insert existing HTML into the component", async () => {
@@ -167,8 +175,8 @@ describe("Custom HTML component with bad selector", () => {
   let testComponent: TestBadCustomHTMLComponent;
 
   beforeAll(() => {
-    Component["savedTemplates"] = {};
-    Component["savedStyles"] = {};
+    Component["savedTemplates"] = new Map();
+    Component["savedStyles"] = new Map();
     spyOn(window, "fetch").and.callFake(mockFetch);
   });
 
@@ -177,10 +185,14 @@ describe("Custom HTML component with bad selector", () => {
   });
 
   afterEach(async () => {
-    await Promise.all([
-      testComponent["getTemplatePromise"],
-      testComponent["getStyleSheetsPromise"]
-    ]);
+    await Component["savedTemplates"].get(testComponent["templateUrl"]);
+    await Promise.all(
+      testComponent["styleUrls"]
+        .map((styleUrl: string) => Component["savedStyles"].get(styleUrl))
+        .filter(
+          (style: Promise<CSSStyleSheet> | undefined) => style !== undefined
+        )
+    );
   });
 
   it("should not insert existing HTML into the component", async () => {
@@ -213,8 +225,8 @@ describe("Component", () => {
   let testComponent: TestComponent;
 
   beforeAll(() => {
-    Component["savedTemplates"] = {};
-    Component["savedStyles"] = {};
+    Component["savedTemplates"] = new Map();
+    Component["savedStyles"] = new Map();
     spyOn(window, "fetch").and.callFake(mockFetch);
   });
 
@@ -224,10 +236,14 @@ describe("Component", () => {
 
   afterEach(async () => {
     // For the sake of accurately counting fetch calls.
-    await Promise.all([
-      testComponent["getTemplatePromise"],
-      testComponent["getStyleSheetsPromise"]
-    ]);
+    await Component["savedTemplates"].get(testComponent["templateUrl"]);
+    await Promise.all(
+      testComponent["styleUrls"]
+        .map((styleUrl: string) => Component["savedStyles"].get(styleUrl))
+        .filter(
+          (style: Promise<CSSStyleSheet> | undefined) => style !== undefined
+        )
+    );
   });
 
   it("should have global style sheets", () => {
@@ -238,8 +254,16 @@ describe("Component", () => {
 
   it("should create and begin fetching files", () => {
     expect(testComponent).toBeTruthy();
-    expect(testComponent["getTemplatePromise"]).toBeTruthy();
-    expect(testComponent["getStyleSheetsPromise"]).toBeTruthy();
+    expect(
+      Component["savedTemplates"].get(testComponent["templateUrl"])
+    ).toBeTruthy();
+    expect(
+      testComponent["styleUrls"]
+        .map((styleUrl: string) => Component["savedStyles"].get(styleUrl))
+        .filter(
+          (style: Promise<CSSStyleSheet> | undefined) => style !== undefined
+        ).length
+    ).toBe(styleSheets.length + globalStyleSheets.length);
     expect(Object.keys(testComponent["inputs"]).length).toBe(
       Object.keys(mockInput).length
     );
@@ -315,7 +339,6 @@ describe("Component", () => {
     await testComponent.connectedCallback();
 
     const children = testComponent.getChildren("*");
-    console.log(children);
     expect(children).toBeTruthy();
     expect(children?.length).toBe(2);
   });
@@ -338,13 +361,13 @@ describe("Component with bad files", () => {
   let badFilesComponent: BadFilesComponent;
 
   beforeAll(() => {
-    Component["savedTemplates"] = {};
-    Component["savedStyles"] = {};
     spyOn(window, "fetch").and.callFake(mockFetch);
     spyOn(console, "error");
   });
 
   beforeEach(() => {
+    Component["savedTemplates"] = new Map();
+    Component["savedStyles"] = new Map();
     (console.error as jasmine.Spy<any>).calls.reset();
     badFilesComponent = new BadFilesComponent();
   });
@@ -356,15 +379,16 @@ describe("Component with bad files", () => {
     expect(console.error).toHaveBeenCalled();
   });
 
-  it("should not have a stylesheet for bad files", async () => {
+  it("should have an empty stylesheet for bad files", async () => {
     await badFilesComponent.connectedCallback();
     const sheets = badFilesComponent.shadowRoot!.adoptedStyleSheets;
-    expect(sheets.length).toBe(styleSheets.length + globalStyleSheets.length);
-    expect(sheets.map((sheet) => sheet.cssRules.item(0)?.cssText)).toEqual(
-      globalStyleSheets
-        .map((sheet) => sheet.content)
-        .concat(styleSheets.map((sheet) => sheet.content))
+    expect(sheets.length).toBe(
+      styleSheets.length + globalStyleSheets.length + 1
     );
+    const badStyleSheet: CSSStyleSheet | undefined =
+      await Component["savedStyles"].get("/not-found.css");
+    expect(badStyleSheet).toBeTruthy();
+    expect(badStyleSheet?.cssRules.length).toBe(0);
     expect(console.error).toHaveBeenCalled();
   });
 });

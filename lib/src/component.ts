@@ -50,13 +50,11 @@ export class Component<
 > extends HTMLElement {
   static observedAttributes = [];
   private static globalStyleSheets: string[] = ["/styles.css"];
-  private static savedTemplates: Record<string, string> = {};
-  private static savedStyles: Record<string, CSSStyleSheet> = {};
+  private static savedTemplates: Map<string, Promise<string>> = new Map();
+  private static savedStyles: Map<string, Promise<CSSStyleSheet>> = new Map();
 
   private templateUrl: string;
   private styleUrls: string[];
-  private getTemplatePromise: Promise<string>;
-  private getStyleSheetsPromise: Promise<CSSStyleSheet[]>;
   protected inputs: { [K in keyof T]: Subject<T[K]> } = {} as any;
   private attachShadowRoot: boolean;
   private insertSelector?: string;
@@ -74,10 +72,10 @@ export class Component<
     this.insertSelector = config.insertSelector;
 
     this.templateUrl = config.templateUrl;
-    this.styleUrls = config.styleUrls || [];
+    this.styleUrls = Component.globalStyleSheets.concat(config.styleUrls || []);
 
-    this.getTemplatePromise = this.getTemplate();
-    this.getStyleSheetsPromise = this.getStyleSheets();
+    this.getTemplate();
+    this.getStyleSheets();
 
     if (config.inputs) {
       for (const key in config.inputs) {
@@ -140,10 +138,14 @@ export class Component<
     const existingHTML = this.innerHTML;
     this.innerHTML = "";
 
-    const fetchResults = await Promise.all([
-      this.getTemplatePromise,
-      this.getStyleSheetsPromise
-    ]);
+    const template =
+      (await Component.savedTemplates.get(this.templateUrl)) || "";
+
+    const styles = await Promise.all(
+      this.styleUrls
+        .map((styleUrl) => Component.savedStyles.get(styleUrl))
+        .filter((style) => style !== undefined)
+    );
 
     if (this.attachShadowRoot) {
       this.attachShadow({ mode: "open" });
@@ -152,13 +154,13 @@ export class Component<
         throw new Error("Failed to attach a shadow DOM to the component.");
       }
 
-      this.shadowRoot.innerHTML += fetchResults[0];
+      this.shadowRoot.innerHTML += template;
       this.shadowRoot.adoptedStyleSheets =
-        this.shadowRoot.adoptedStyleSheets.concat(fetchResults[1]);
+        this.shadowRoot.adoptedStyleSheets.concat(styles);
     } else {
-      this.innerHTML += fetchResults[0];
+      this.innerHTML += template;
       const root = this.getRootNode() as ShadowRoot;
-      root.adoptedStyleSheets = root.adoptedStyleSheets.concat(fetchResults[1]);
+      root.adoptedStyleSheets = root.adoptedStyleSheets.concat(styles);
     }
 
     if (this.insertSelector && existingHTML) {
@@ -180,59 +182,39 @@ export class Component<
    */
   connectedMoveCallback() {}
 
-  private getTemplate(): Promise<string> {
-    return new Promise<string>((resolve) => {
-      if (Component.savedTemplates[this.templateUrl]) {
-        resolve(Component.savedTemplates[this.templateUrl]);
-        return;
-      }
-      this.fetchFile(this.templateUrl)
-        .then((response) => {
-          Component.savedTemplates[this.templateUrl] = response;
-          resolve(response);
-        })
-        .catch((error: Error) => {
-          console.error(
-            `Failed to fetch template at ${this.templateUrl}: `,
-            error
-          );
-          resolve("");
-        });
-    });
+  private getTemplate() {
+    if (Component.savedTemplates.has(this.templateUrl)) return;
+    Component.savedTemplates.set(
+      this.templateUrl,
+      this.fetchFile(this.templateUrl).catch((error: Error) => {
+        console.error(
+          `Failed to fetch template at ${this.templateUrl}: `,
+          error
+        );
+        return "";
+      })
+    );
   }
 
-  private async getStyleSheets(): Promise<CSSStyleSheet[]> {
-    const allStyleUrls = Component.globalStyleSheets.concat(this.styleUrls);
+  private getStyleSheets() {
+    if (this.styleUrls.length === 0) return;
 
-    if (allStyleUrls.length === 0) {
-      return [];
-    }
-
-    const promises: Promise<void>[] = [];
-    const sheets: CSSStyleSheet[] = [];
-
-    for (const styleUrl of allStyleUrls) {
-      if (Component.savedStyles[styleUrl]) {
-        sheets.push(Component.savedStyles[styleUrl]);
-        continue;
-      }
-      promises.push(
+    for (const styleUrl of this.styleUrls) {
+      if (Component.savedStyles.has(styleUrl)) continue;
+      Component.savedStyles.set(
+        styleUrl,
         this.fetchFile(styleUrl)
           .then((response) => {
             const newSheet = new CSSStyleSheet();
             newSheet.replaceSync(response);
-            Component.savedStyles[styleUrl] = newSheet;
-            sheets.push(newSheet);
+            return newSheet;
           })
           .catch((error: Error) => {
-            console.error(`Failed to fetch css at ${styleUrl}: `, error);
+            console.error(`Failed to fetch styles at ${styleUrl}: `, error);
+            return new CSSStyleSheet();
           })
       );
     }
-
-    await Promise.all(promises);
-
-    return sheets;
   }
 
   private async fetchFile(url: string): Promise<string> {

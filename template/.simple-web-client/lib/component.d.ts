@@ -53,8 +53,6 @@ export declare class Component<T extends {
     private static savedStyles;
     private templateUrl;
     private styleUrls;
-    private getTemplatePromise;
-    private getStyleSheetsPromise;
     protected inputs: {
         [K in keyof T]: Subject<T[K]>;
     };

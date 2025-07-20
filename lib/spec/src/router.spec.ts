@@ -68,8 +68,8 @@ describe("Router", () => {
   let div: HTMLDivElement;
 
   beforeAll(() => {
-    Component["savedTemplates"] = {};
-    Component["savedStyles"] = {};
+    Component["savedTemplates"] = new Map();
+    Component["savedStyles"] = new Map();
     spyOn(window, "fetch").and.callFake(mockFetch);
     div = document.createElement("div");
     div.hidden = true;
