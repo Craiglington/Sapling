@@ -1,6 +1,0 @@
-node_modules
-.simple-web-client
-app/**/*.js
-dist
-spec/dist
-package-lock.json

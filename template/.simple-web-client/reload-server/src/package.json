@@ -1,8 +1,0 @@
-{
-  "name": "reload-server",
-  "version": "1.0.0",
-  "scripts": {
-    "start": "node reload-server.js"
-  },
-  "type": "module"
-}

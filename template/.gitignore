@@ -1,5 +1,0 @@
-node_modules
-.simple-web-client/nginx/certs
-app/**/*.js
-dist
-spec/dist
