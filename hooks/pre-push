@@ -45,8 +45,14 @@ if ! npx tsc; then
 fi
 
 echo -e "\n${GREEN}-> Commiting dist${RESET}"
-git add dist/*
-git commit dist/* -m "Recompiled dist."
+if ! git add dist/* || ! git commit dist/* -m "Recompiled dist."; then
+  echo -e "\n${RED}-> No dist changes added to commit. Would you like to proceed? (Y/n):${RESET}"
+  read -r response
+  if [[ "$response" =~ ^[Nn]$ ]]; then
+    echo -e "\n${RED}-> Aborting push${RESET}"
+    exit 1
+  fi
+fi
 
 if ! $is_pushing_to_main; then
   exit 0
