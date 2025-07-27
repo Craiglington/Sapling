@@ -46,7 +46,7 @@ fi
 
 echo -e "\n${GREEN}-> Commiting dist${RESET}"
 if ! git add dist/* || ! git commit dist/* -m "Recompiled dist."; then
-  echo -e "\n${RED}-> No dist changes added to commit. Would you like to proceed? (Y/n):${RESET}"
+  echo -ne "\n${RED}-> No dist changes added to commit. Would you like to proceed? (Y/n): ${RESET}"
   read -r response < /dev/tty
   if [[ "$response" =~ ^[Nn]$ ]]; then
     echo -e "\n${RED}-> Aborting push${RESET}"
