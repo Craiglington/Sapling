@@ -1,7 +1,7 @@
 export default {
-  srcDir: "dist",
+  srcDir: "src/dist",
   srcFiles: [],
-  specDir: "spec/dist",
+  specDir: "spec/src/dist",
   specFiles: ["**/*[sS]pec.js"],
   helpers: ["helpers/**/*.js"],
   esmFilenameExtension: ".js",

@@ -8,12 +8,13 @@
     "preserveConstEnums": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
-    "outDir": "dist",
+    "outDir": "src/dist",
     "paths": {
-      "/__src__/*": ["./../dist/*"]
+      "/__src__/*": ["./../src/dist/*"]
     }
   },
   "include": ["src"],
+  "exclude": ["src/dist"],
   "watchOptions": {
     "watchFile": "useFsEvents",
     "watchDirectory": "useFsEvents",

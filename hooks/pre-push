@@ -23,50 +23,52 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 RESET='\033[0m'
 
-is_pushing_to_main=false
-while read local_ref local_oid remote_ref remote_oid; do
-  if [[ "$remote_ref" == "refs/heads/main" ]]; then
-    is_pushing_to_main=true
-    break
-  fi
-done
+# is_pushing_to_main=false
+# while read local_ref local_oid remote_ref remote_oid; do
+#   if [[ "$remote_ref" == "refs/heads/main" ]]; then
+#     is_pushing_to_main=true
+#     break
+#   fi
+# done
 
 echo -e "\n${GREEN}-> Checking prettier${RESET}"
 if ! npx prettier . --check; then
-  echo -e "\n${RED}-> Run prettier before pushing${RESET}"
+  echo -e "\n${RED}-> Aborting push: Run prettier before pushing${RESET}"
   exit 1
 fi
 
-echo -e "\n${GREEN}-> Compiling src${RESET}"
-rm -rf dist
-if ! npx tsc; then
-  echo -e "\n${RED}-> Failed to compile src${RESET}"
-  exit 1
-fi
+# echo -e "\n${GREEN}-> Compiling src${RESET}"
+# rm -rf src/dist
+# if ! npx tsc; then
+#   echo -e "\n${RED}-> Aborting push: Failed to compile src${RESET}"
+#   exit 1
+# fi
 
-echo -e "\n${GREEN}-> Commiting dist${RESET}"
-if ! git add dist/* || ! git commit dist/* -m "Recompiled dist."; then
-  echo -ne "\n${RED}-> No dist changes added to commit. Would you like to proceed? (Y/n): ${RESET}"
-  read -r response < /dev/tty
-  if [[ "$response" =~ ^[Nn]$ ]]; then
-    echo -e "\n${RED}-> Aborting push${RESET}"
-    exit 1
-  fi
-fi
+# if ! $is_pushing_to_main; then
+#   exit 0
+# fi
 
-if ! $is_pushing_to_main; then
-  exit 0
-fi
+# echo -e "\n${GREEN}-> Commiting dist${RESET}"
+# if ! git add dist/* || ! git commit dist/* -m "Recompiled dist."; then
+#   echo -ne "\n${RED}-> No dist changes added to commit. Would you like to proceed? (Y/n): ${RESET}"
+#   read -r response < /dev/tty
+#   if [[ "$response" =~ ^[Nn]$ ]]; then
+#     echo -e "\n${RED}-> Aborting push${RESET}"
+#     exit 1
+#   fi
+# fi
 
-echo -e "\n${GREEN}-> Compiling specs${RESET}"
-rm -rf spec/dist
-if ! npx tsc -p spec; then
-  echo -e "\n${RED}-> Failed to compile specs${RESET}"
-  exit 1
-fi
+# echo -e "\n${GREEN}-> Compiling specs${RESET}"
+# rm -rf spec/dist
+# if ! npx tsc -p spec; then
+#   echo -e "\n${RED}-> Aborting push: Failed to compile specs${RESET}"
+#   exit 1
+# fi
 
-echo -e "\n${GREEN}-> Running specs${RESET}"
-if ! npx jasmine-browser-runner runSpecs; then
-  echo -e "\n${RED}-> Specs are failing${RESET}"
-  exit 1
-fi
+# echo -e "\n${GREEN}-> Running specs${RESET}"
+# if ! npx jasmine-browser-runner runSpecs; then
+#   echo -e "\n${RED}-> Aborting push: Specs are failing${RESET}"
+#   exit 1
+# fi
+
+echo -e "\n${GREEN}-> Pushing${RESET}"

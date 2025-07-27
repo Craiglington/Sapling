@@ -1,5 +1,3 @@
-import { Subject } from "./subject.js";
-
 /**
  * A `Component` is an extension of an `HTMLElement`. It can be extended to create custom HTML elements.
  * When creating a `Component`, paths to an `.html` file and `.css` files should be provided.
@@ -22,10 +20,7 @@ import { Subject } from "./subject.js";
  * window.customElements.define("test-component", TestComponent);
  * ```
  *
- * There are several optional configuration options for a `Component`.
- * - `inputs`
- *   - Key value pairs used to create `Subjects` during `Component` construction.
- * The `Subjects` can be subscribed to from within the component and can be set from a parent component.
+ * There are optional configuration options for a `Component`.
  * - `attachShadowRoot`
  *   - Whether or not this component should be inserted into its own shadow DOM.
  * If `false`, this component will be inserted into its parent component's shadow DOM. If not provided, defaults to `true`.
@@ -45,9 +40,7 @@ import { Subject } from "./subject.js";
  *
  * See https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements#custom_element_lifecycle_callbacks for details on lifecycle events.
  */
-export class Component<
-  T extends { [key: string]: any } = {}
-> extends HTMLElement {
+export class Component extends HTMLElement {
   static observedAttributes = [];
   private static globalStyleSheets: string[] = ["/styles.css"];
   private static savedTemplates: Map<string, Promise<string>> = new Map();
@@ -55,14 +48,12 @@ export class Component<
 
   private templateUrl: string;
   private styleUrls: string[];
-  protected inputs: { [K in keyof T]: Subject<T[K]> } = {} as any;
   private attachShadowRoot: boolean;
   private insertSelector?: string;
 
   constructor(config: {
     templateUrl: string;
     styleUrls?: string[];
-    inputs?: T;
     attachShadowRoot?: boolean;
     insertSelector?: string;
   }) {
@@ -76,12 +67,6 @@ export class Component<
 
     this.getTemplate();
     this.getStyleSheets();
-
-    if (config.inputs) {
-      for (const key in config.inputs) {
-        this.inputs[key] = new Subject(config.inputs[key]);
-      }
-    }
   }
 
   /**
@@ -91,15 +76,6 @@ export class Component<
    */
   static addGlobalStyleSheet(url: string) {
     Component.globalStyleSheets.push(url);
-  }
-
-  /**
-   * Used to communicate to a child component. Set the value of an input.
-   * @param key The input's key.
-   * @param value The new value of the input.
-   */
-  setInput<K extends keyof T>(key: K, value: T[K]) {
-    this.inputs[key].emit(value);
   }
 
   /**
@@ -114,7 +90,7 @@ export class Component<
   }
 
   /**
-   * Queries the component and returns a list of child.
+   * Queries the component and returns a list of children.
    * @param selectors A valid CSS selector.
    * @returns `null` if the element is not found or a list of `Elements`.
    */
@@ -164,19 +140,15 @@ export class Component<
     }
 
     if (this.insertSelector && existingHTML) {
-      this.insertExistingHTML(this.insertSelector, existingHTML);
-    }
-  }
-
-  private insertExistingHTML(selector: string, html: string) {
-    const insertElement = this.getChild<Element>(selector);
-    if (insertElement) {
-      insertElement.innerHTML += html;
+      const insertElement = this.getChild<Element>(this.insertSelector);
+      if (insertElement) {
+        insertElement.innerHTML += existingHTML;
+      }
     }
   }
 
   /**
-   * Provided as suggested by `mdn web docs`.
+   * Provided as suggested by mdn web docs.
    *
    * https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements#custom_element_lifecycle_callbacks
    */

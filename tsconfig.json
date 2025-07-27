@@ -9,9 +9,10 @@
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "declaration": true,
-    "outDir": "dist"
+    "outDir": "src/dist"
   },
   "include": ["src"],
+  "exclude": ["src/dist"],
   "watchOptions": {
     "watchFile": "useFsEvents",
     "watchDirectory": "useFsEvents",

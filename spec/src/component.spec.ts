@@ -49,13 +49,8 @@ const mockFetch = async (input: RequestInfo | URL) => {
   });
 };
 
-const mockInput = {
-  title: "Hello world!",
-  value: 15
-};
-
 describe("Component with no shadow DOM", () => {
-  class TestNoShadowDOMComponent extends Component<typeof mockInput> {
+  class TestNoShadowDOMComponent extends Component {
     constructor() {
       super({
         templateUrl: template.url,
@@ -105,7 +100,7 @@ describe("Component with no shadow DOM", () => {
 });
 
 describe("Custom HTML component", () => {
-  class TestCustomHTMLComponent extends Component<typeof mockInput> {
+  class TestCustomHTMLComponent extends Component {
     constructor() {
       super({
         templateUrl: template.url,
@@ -158,7 +153,7 @@ describe("Custom HTML component", () => {
 });
 
 describe("Custom HTML component with bad selector", () => {
-  class TestBadCustomHTMLComponent extends Component<typeof mockInput> {
+  class TestBadCustomHTMLComponent extends Component {
     constructor() {
       super({
         templateUrl: template.url,
@@ -211,12 +206,11 @@ describe("Custom HTML component with bad selector", () => {
 });
 
 describe("Component", () => {
-  class TestComponent extends Component<typeof mockInput> {
+  class TestComponent extends Component {
     constructor() {
       super({
         templateUrl: template.url,
-        styleUrls: styleSheets.map((sheet) => sheet.url),
-        inputs: mockInput
+        styleUrls: styleSheets.map((sheet) => sheet.url)
       });
     }
   }
@@ -264,9 +258,6 @@ describe("Component", () => {
           (style: Promise<CSSStyleSheet> | undefined) => style !== undefined
         ).length
     ).toBe(styleSheets.length + globalStyleSheets.length);
-    expect(Object.keys(testComponent["inputs"]).length).toBe(
-      Object.keys(mockInput).length
-    );
   });
 
   it("should attach the shadow element in the connectedCallback", async () => {
@@ -298,28 +289,6 @@ describe("Component", () => {
     expect(window.fetch).toHaveBeenCalledTimes(
       1 + globalStyleSheets.length + styleSheets.length
     );
-  });
-
-  it("should use and update inputs", () => {
-    let title = "";
-    testComponent["inputs"].title.subscribe((value) => {
-      title = value;
-    });
-    expect(title).toBe(mockInput.title);
-
-    let value = 0;
-    testComponent["inputs"].value.subscribe((newValue) => {
-      value = newValue;
-    });
-    expect(value).toBe(mockInput.value);
-
-    testComponent.setInput("title", "New title!");
-    expect(title).not.toBe(mockInput.title);
-    expect(title).toBe("New title!");
-
-    testComponent.setInput("value", 10);
-    expect(value).not.toBe(mockInput.value);
-    expect(value).toBe(10);
   });
 
   it("should get a child from the shadowRoot", async () => {

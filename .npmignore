@@ -1,0 +1,4 @@
+src
+!src/dist
+spec
+!spec/src/dist

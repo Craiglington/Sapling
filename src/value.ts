@@ -1,6 +1,6 @@
 type PropertyCallback<T> = ((value: T) => any) | undefined;
 type AttributeCallback<T> = ((value: T) => string) | undefined;
-type ClassCallback<T> = (value: T) => boolean;
+type ClassCallback<T> = ((value: T) => boolean) | undefined;
 
 type ValueElement<TElement extends Element, TValue> = {
   element: TElement;
@@ -113,11 +113,10 @@ export class Value<TValue> {
     callback: ClassCallback<TValue>
   ) {
     try {
-      if (callback(this._value)) {
-        element.classList.add(className);
-      } else {
-        element.classList.remove(className);
-      }
+      element.classList.toggle(
+        className,
+        callback ? callback(this._value) : !!this._value
+      );
     } catch (error) {
       console.error("Error while setting template element class: ", error);
     }
@@ -172,12 +171,12 @@ export class Value<TValue> {
    *
    * @param element An `Element`.
    * @param attribute An attribute of the provided `Element`.
-   * @param callback A function that is passed the value and returns the attribute's value.
+   * @param callback A function that is passed the value and returns a boolean.
    */
   bindElementClass<TElement extends Element>(
     element: TElement,
     className: string,
-    callback: ClassCallback<TValue>
+    callback?: ClassCallback<TValue>
   ) {
     this.setElementClass(element, className, callback);
 
