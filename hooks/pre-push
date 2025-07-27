@@ -45,10 +45,8 @@ if ! npx tsc; then
 fi
 
 echo -e "\n${GREEN}-> Commiting dist${RESET}"
-if ! git add dist/* || ! git commit dist/* -m "Recompiled dist."; then
-  echo -e "\n${RED}-> Failed to commit dist${RESET}"
-  exit 1
-fi
+git add dist/*
+git commit dist/* -m "Recompiled dist."
 
 if ! $is_pushing_to_main; then
   exit 0
