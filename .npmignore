@@ -1,4 +1,4 @@
-src
+src/*
 !src/dist
-spec
+spec/src/*
 !spec/src/dist
