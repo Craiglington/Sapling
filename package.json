@@ -1,7 +1,9 @@
 {
   "name": "@craiglington/sapling",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A simple front-end framework.",
+  "main": "src/dist/index.js",
+  "types": "src/dist/index.d.ts",
   "scripts": {
     "build": "npx tsc",
     "prettier": "npx prettier . --write",
@@ -26,6 +28,5 @@
     "jasmine-core": "^5.9.0",
     "prettier": "^3.6.2",
     "typescript": "^5.8.3"
-  },
-  "type": "module"
+  }
 }
