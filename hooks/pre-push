@@ -1,0 +1,64 @@
+#!/bin/bash
+
+# An example hook script to verify what is about to be pushed.  Called by "git
+# push" after it has checked the remote status, but before anything has been
+# pushed.  If this script exits with a non-zero status nothing will be pushed.
+#
+# This hook is called with the following parameters:
+#
+# $1 -- Name of the remote to which the push is being done
+# $2 -- URL to which the push is being done
+#
+# If pushing without using a named remote those arguments will be equal.
+#
+# Information about the commits which are being pushed is supplied as lines to
+# the standard input in the form:
+#
+#   <local ref> <local oid> <remote ref> <remote oid>
+#
+# This sample shows how to prevent push of commits where the log message starts
+# with "WIP" (work in progress).
+
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+RESET='\033[0m'
+remote="$1"
+
+echo "\n$1"
+echo "\n$2"
+
+# echo -e "\n${GREEN}-> Checking prettier${RESET}"
+# if ! npx prettier . --check; then
+#   echo -e "\n${RED}-> Run prettier before pushing${RESET}"
+#   exit 1
+# fi
+
+# echo -e "\n${GREEN}-> Compiling src${RESET}"
+# rm -rf dist
+# if ! npx tsc; then
+#   echo -e "\n${RED}-> Failed to compile src${RESET}"
+#   exit 1
+# fi
+
+# echo -e "\n${GREEN}-> Commiting dist${RESET}"
+# if ! git add dist/* || ! git commit dist/* -m "Recompiled dist."; then
+#   echo -e "\n${RED}-> Failed to commit dist${RESET}"
+#   exit 1
+# fi
+
+# if [ "$remote" != "main" ]; then
+#   exit 0
+# fi
+
+# echo -e "\n${GREEN}-> Compiling specs${RESET}"
+# rm -rf spec/dist
+# if ! npx tsc -p spec; then
+#   echo -e "\n${RED}-> Failed to compile specs${RESET}"
+#   exit 1
+# fi
+
+# echo -e "\n${GREEN}-> Running specs${RESET}"
+# if ! npx jasmine-browser-runner runSpecs; then
+#   echo -e "\n${RED}-> Specs are failing${RESET}"
+#   exit 1
+# fi
