@@ -1,6 +1,6 @@
 {
   "name": "@craiglington/sapling",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A simple front-end framework.",
   "scripts": {
     "build": "npx tsc",
@@ -8,7 +8,7 @@
     "start": "npx tsc --watch",
     "test": "npx tsc -p spec && npx jasmine-browser-runner runSpecs",
     "test-serve": "npx tsc -p spec && npx jasmine-browser-runner serve",
-    "publish": "npm publish --access public"
+    "release": "npm publish --access public"
   },
   "repository": {
     "type": "git",
