@@ -26,6 +26,10 @@ const globalStyleSheets: File[] = [
   }
 ];
 
+for (const sheet of globalStyleSheets) {
+  Component.addGlobalStyleUrl(sheet.url);
+}
+
 const mockFetch = async (input: RequestInfo | URL) => {
   if (input === template.url) {
     return new Response(template.content);
@@ -79,14 +83,8 @@ describe("Component with no shadow DOM", () => {
   });
 
   afterEach(async () => {
-    await Component["savedTemplates"].get(testComponent["templateUrl"]);
-    await Promise.all(
-      testComponent["styleUrls"]
-        .map((styleUrl: string) => Component["savedStyles"].get(styleUrl))
-        .filter(
-          (style: Promise<CSSStyleSheet> | undefined) => style !== undefined
-        )
-    );
+    await testComponent["template"];
+    await testComponent["styles"];
     testComponent.remove();
   });
 
@@ -127,14 +125,8 @@ describe("Custom HTML component", () => {
   });
 
   afterEach(async () => {
-    await Component["savedTemplates"].get(testComponent["templateUrl"]);
-    await Promise.all(
-      testComponent["styleUrls"]
-        .map((styleUrl: string) => Component["savedStyles"].get(styleUrl))
-        .filter(
-          (style: Promise<CSSStyleSheet> | undefined) => style !== undefined
-        )
-    );
+    await testComponent["template"];
+    await testComponent["styles"];
   });
 
   it("should insert existing HTML into the component", async () => {
@@ -180,14 +172,8 @@ describe("Custom HTML component with bad selector", () => {
   });
 
   afterEach(async () => {
-    await Component["savedTemplates"].get(testComponent["templateUrl"]);
-    await Promise.all(
-      testComponent["styleUrls"]
-        .map((styleUrl: string) => Component["savedStyles"].get(styleUrl))
-        .filter(
-          (style: Promise<CSSStyleSheet> | undefined) => style !== undefined
-        )
-    );
+    await testComponent["template"];
+    await testComponent["styles"];
   });
 
   it("should not insert existing HTML into the component", async () => {
@@ -230,34 +216,22 @@ describe("Component", () => {
 
   afterEach(async () => {
     // For the sake of accurately counting fetch calls.
-    await Component["savedTemplates"].get(testComponent["templateUrl"]);
-    await Promise.all(
-      testComponent["styleUrls"]
-        .map((styleUrl: string) => Component["savedStyles"].get(styleUrl))
-        .filter(
-          (style: Promise<CSSStyleSheet> | undefined) => style !== undefined
-        )
-    );
+    await testComponent["template"];
+    await testComponent["styles"];
   });
 
   it("should have global style sheets", () => {
-    expect(Component["globalStyleSheets"]).toEqual(
+    expect(Component["globalStyleUrls"]).toEqual(
       globalStyleSheets.map((sheet) => sheet.url)
     );
   });
 
   it("should create and begin fetching files", () => {
     expect(testComponent).toBeTruthy();
-    expect(
-      Component["savedTemplates"].get(testComponent["templateUrl"])
-    ).toBeTruthy();
-    expect(
-      testComponent["styleUrls"]
-        .map((styleUrl: string) => Component["savedStyles"].get(styleUrl))
-        .filter(
-          (style: Promise<CSSStyleSheet> | undefined) => style !== undefined
-        ).length
-    ).toBe(styleSheets.length + globalStyleSheets.length);
+    expect(testComponent["template"]).toBeTruthy();
+    expect(testComponent["styles"].length).toBe(
+      styleSheets.length + globalStyleSheets.length
+    );
   });
 
   it("should attach the shadow element in the connectedCallback", async () => {
@@ -310,6 +284,67 @@ describe("Component", () => {
     const children = testComponent.getChildren("*");
     expect(children).toBeTruthy();
     expect(children?.length).toBe(2);
+  });
+});
+
+describe("Component with defined template and styles", () => {
+  class TestDefinedComponent extends Component {
+    constructor() {
+      super({
+        template: template.content,
+        styles: styleSheets.map((sheet) => sheet.content)
+      });
+    }
+  }
+  window.customElements.define("test-defined-component", TestDefinedComponent);
+
+  let testComponent: TestDefinedComponent;
+
+  beforeAll(() => {
+    Component["savedTemplates"] = new Map();
+    Component["savedStyles"] = new Map();
+    spyOn(window, "fetch").and.callFake(mockFetch);
+  });
+
+  beforeEach(() => {
+    testComponent = new TestDefinedComponent();
+  });
+
+  afterEach(async () => {
+    // For the sake of accurately counting fetch calls.
+    await testComponent["template"];
+    await testComponent["styles"];
+  });
+
+  it("should create and begin fetching files", () => {
+    expect(testComponent).toBeTruthy();
+    expect(testComponent["template"]).toBeTruthy();
+    expect(testComponent["styles"].length).toBe(
+      styleSheets.length + globalStyleSheets.length
+    );
+  });
+
+  it("should attach the shadow element in the connectedCallback", async () => {
+    spyOn(testComponent, "attachShadow").and.callThrough();
+    await testComponent.connectedCallback();
+    expect(testComponent.attachShadow).toHaveBeenCalledOnceWith({
+      mode: "open"
+    });
+    expect(testComponent.shadowRoot).toBeTruthy();
+  });
+
+  it("should finish fetching all files in the connectedCallback", async () => {
+    await testComponent.connectedCallback();
+    expect(testComponent.shadowRoot).toBeTruthy();
+    expect(testComponent.shadowRoot!.innerHTML).toBe(template.content);
+    const sheets = testComponent.shadowRoot!.adoptedStyleSheets;
+    expect(sheets.length).toBe(globalStyleSheets.length + styleSheets.length);
+  });
+
+  it("should have called fetch once for each global css file", async () => {
+    await testComponent.connectedCallback();
+
+    expect(window.fetch).toHaveBeenCalledTimes(globalStyleSheets.length);
   });
 });
 

@@ -1,7 +1,6 @@
 /**
  * A `Component` is an extension of an `HTMLElement`. It can be extended to create custom HTML elements.
- * When creating a `Component`, paths to an `.html` file and `.css` files should be provided.
- * All `Component` elements will receive styling from the `/styles.css` file. Other global style sheets can be added.
+ * When creating a `Component`, a template must be provided. Style sheets can also be provided to either individual components or to all components.
  *
  * For every custom `Component`, make sure to add it to the custom element registry.
  * This is what allows for the custom component to be used in an `.html` file.
@@ -42,11 +41,12 @@
  */
 export class Component extends HTMLElement {
     static observedAttributes = [];
-    static globalStyleSheets = ["/styles.css"];
+    static globalStyleSheets = [];
+    static globalStyleUrls = [];
     static savedTemplates = new Map();
     static savedStyles = new Map();
-    templateUrl;
-    styleUrls;
+    template;
+    styles = [];
     attachShadowRoot;
     insertSelector;
     constructor(config) {
@@ -54,18 +54,45 @@ export class Component extends HTMLElement {
         this.attachShadowRoot =
             config.attachShadowRoot !== undefined ? config.attachShadowRoot : true;
         this.insertSelector = config.insertSelector;
-        this.templateUrl = config.templateUrl;
-        this.styleUrls = Component.globalStyleSheets.concat(config.styleUrls || []);
-        this.getTemplate();
-        this.getStyleSheets();
+        if (config.template) {
+            this.template = Promise.resolve(config.template);
+        }
+        else if (config.templateUrl) {
+            this.template = this.getTemplate(config.templateUrl);
+        }
+        else {
+            throw new Error("Either a template or a template url must be provided.");
+        }
+        this.styles = Component.globalStyleSheets
+            .map((sheet) => Promise.resolve(sheet))
+            .concat(this.getStyleSheets(Component.globalStyleUrls));
+        if (config.styles) {
+            this.styles = this.styles.concat(config.styles.map((css) => Promise.resolve(Component.getCSSStyleSheet(css))));
+        }
+        else if (config.styleUrls) {
+            this.styles = this.styles.concat(this.getStyleSheets(config.styleUrls));
+        }
+    }
+    static getCSSStyleSheet(css) {
+        const newSheet = new CSSStyleSheet();
+        newSheet.replaceSync(css);
+        return newSheet;
+    }
+    /**
+     *
+     * Using this method will only add a global stylesheet to Components not yet created.
+     * @param css The css.
+     */
+    static addGlobalStyleSheet(css) {
+        Component.globalStyleSheets.push(Component.getCSSStyleSheet(css));
     }
     /**
      *
      * Using this method will only add a global stylesheet to Components not yet created.
      * @param url The url of the stylesheet. Ex: `/global.css`.
      */
-    static addGlobalStyleSheet(url) {
-        Component.globalStyleSheets.push(url);
+    static addGlobalStyleUrl(url) {
+        Component.globalStyleUrls.push(url);
     }
     /**
      * Queries the component and returns a child.
@@ -98,10 +125,8 @@ export class Component extends HTMLElement {
     async connectedCallback() {
         const existingHTML = this.innerHTML;
         this.innerHTML = "";
-        const template = (await Component.savedTemplates.get(this.templateUrl)) || "";
-        const styles = await Promise.all(this.styleUrls
-            .map((styleUrl) => Component.savedStyles.get(styleUrl))
-            .filter((style) => style !== undefined));
+        const template = await this.template;
+        const styles = await Promise.all(this.styles);
         if (this.attachShadowRoot) {
             this.attachShadow({ mode: "open" });
             if (!this.shadowRoot) {
@@ -129,21 +154,28 @@ export class Component extends HTMLElement {
      * https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements#custom_element_lifecycle_callbacks
      */
     connectedMoveCallback() { }
-    getTemplate() {
-        if (Component.savedTemplates.has(this.templateUrl))
-            return;
-        Component.savedTemplates.set(this.templateUrl, this.fetchFile(this.templateUrl).catch((error) => {
-            console.error(`Failed to fetch template at ${this.templateUrl}: `, error);
+    getTemplate(templateUrl) {
+        const saved = Component.savedTemplates.get(templateUrl);
+        if (saved)
+            return saved;
+        const fetchResult = this.fetchFile(templateUrl).catch((error) => {
+            console.error(`Failed to fetch template at ${templateUrl}: `, error);
             return "";
-        }));
+        });
+        Component.savedTemplates.set(templateUrl, fetchResult);
+        return fetchResult;
     }
-    getStyleSheets() {
-        if (this.styleUrls.length === 0)
-            return;
-        for (const styleUrl of this.styleUrls) {
-            if (Component.savedStyles.has(styleUrl))
+    getStyleSheets(styleUrls) {
+        if (styleUrls.length === 0)
+            return [];
+        const sheets = [];
+        for (const styleUrl of styleUrls) {
+            const saved = Component.savedStyles.get(styleUrl);
+            if (saved) {
+                sheets.push(saved);
                 continue;
-            Component.savedStyles.set(styleUrl, this.fetchFile(styleUrl)
+            }
+            const sheet = this.fetchFile(styleUrl)
                 .then((response) => {
                 const newSheet = new CSSStyleSheet();
                 newSheet.replaceSync(response);
@@ -152,8 +184,11 @@ export class Component extends HTMLElement {
                 .catch((error) => {
                 console.error(`Failed to fetch styles at ${styleUrl}: `, error);
                 return new CSSStyleSheet();
-            }));
+            });
+            Component.savedStyles.set(styleUrl, sheet);
+            sheets.push(sheet);
         }
+        return sheets;
     }
     async fetchFile(url) {
         const response = await fetch(url);

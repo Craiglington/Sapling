@@ -1,7 +1,6 @@
 /**
  * A `Component` is an extension of an `HTMLElement`. It can be extended to create custom HTML elements.
- * When creating a `Component`, paths to an `.html` file and `.css` files should be provided.
- * All `Component` elements will receive styling from the `/styles.css` file. Other global style sheets can be added.
+ * When creating a `Component`, a template must be provided. Style sheets can also be provided to either individual components or to all components.
  *
  * For every custom `Component`, make sure to add it to the custom element registry.
  * This is what allows for the custom component to be used in an `.html` file.
@@ -43,24 +42,34 @@
 export declare class Component extends HTMLElement {
     static observedAttributes: never[];
     private static globalStyleSheets;
+    private static globalStyleUrls;
     private static savedTemplates;
     private static savedStyles;
-    private templateUrl;
-    private styleUrls;
+    private template;
+    private styles;
     private attachShadowRoot;
     private insertSelector?;
     constructor(config: {
-        templateUrl: string;
+        template?: string;
+        templateUrl?: string;
+        styles?: string[];
         styleUrls?: string[];
         attachShadowRoot?: boolean;
         insertSelector?: string;
     });
+    static getCSSStyleSheet(css: string): CSSStyleSheet;
+    /**
+     *
+     * Using this method will only add a global stylesheet to Components not yet created.
+     * @param css The css.
+     */
+    static addGlobalStyleSheet(css: string): void;
     /**
      *
      * Using this method will only add a global stylesheet to Components not yet created.
      * @param url The url of the stylesheet. Ex: `/global.css`.
      */
-    static addGlobalStyleSheet(url: string): void;
+    static addGlobalStyleUrl(url: string): void;
     /**
      * Queries the component and returns a child.
      * @param selectors A valid CSS selector.
