@@ -1,12 +1,12 @@
-type PropertyCallback<T> = ((value: T) => any) | undefined;
-type AttributeCallback<T> = ((value: T) => string) | undefined;
-type ClassCallback<T> = ((value: T) => boolean) | undefined;
+type PropertyCallback<T, S> = (value: T) => S;
+type AttributeCallback<T> = (value: T) => string;
+type ClassCallback<T> = (value: T) => boolean;
 
 type ValueElement<TElement extends Element, TValue> = {
   element: TElement;
-  properties: Map<keyof TElement, PropertyCallback<TValue>>;
-  attributes: Map<string, AttributeCallback<TValue>>;
-  classes: Map<string, ClassCallback<TValue>>;
+  properties: Map<keyof TElement, PropertyCallback<TValue, any> | undefined>;
+  attributes: Map<string, AttributeCallback<TValue> | undefined>;
+  classes: Map<string, ClassCallback<TValue> | undefined>;
 };
 
 /**
@@ -76,10 +76,15 @@ export class Value<TValue> {
     }
   }
 
-  private setElementProperty<TElement extends Element>(
+  private setElementProperty<
+    TElement extends Element,
+    TProperty extends keyof {
+      -readonly [Property in keyof TElement]: TElement[Property];
+    }
+  >(
     element: TElement,
-    property: keyof TElement,
-    callback: PropertyCallback<TValue>
+    property: TProperty,
+    callback?: PropertyCallback<TValue, any>
   ) {
     try {
       element[property] = callback ? callback(this._value) : this._value;
@@ -91,7 +96,7 @@ export class Value<TValue> {
   private setElementAttribute<TElement extends Element>(
     element: TElement,
     attribute: string,
-    callback: AttributeCallback<TValue>
+    callback?: AttributeCallback<TValue>
   ) {
     try {
       element.setAttribute(
@@ -110,7 +115,7 @@ export class Value<TValue> {
   private setElementClass<TElement extends Element>(
     element: TElement,
     className: string,
-    callback: ClassCallback<TValue>
+    callback?: ClassCallback<TValue>
   ) {
     try {
       element.classList.toggle(
@@ -126,15 +131,41 @@ export class Value<TValue> {
    * Binds the value of a `Value` to a property of an `Element`.
    * When the value is updated, the property will be updated as well.
    *
-   * Instead of simply setting the bound property to the value, an optional callback can be used to set the property based on the value.
+   * @param element An `Element`.
+   * @param property A property of the provided `Element` that is of the same type as the `Value`.
+   */
+  bindElementProperty<
+    TElement extends Element,
+    TProperty extends {
+      -readonly [Property in keyof TElement]: TElement[Property] extends TValue
+        ? Property
+        : never;
+    }[keyof TElement]
+  >(element: TElement, property: TProperty) {
+    this.setElementProperty(element, property);
+
+    let existingElement = this.getValueElement(element);
+
+    existingElement.properties.set(property, undefined);
+  }
+
+  /**
+   * Binds the value of a `Value` to a property of an `Element`.
+   * When the value is updated, the property will be updated using the provided callback.
+   *
    * @param element An `Element`.
    * @param property A property of the provided `Element`.
    * @param callback A function that is passed the value and returns the property's value.
    */
-  bindElementProperty<TElement extends Element>(
+  bindElementPropertyWith<
+    TElement extends Element,
+    TProperty extends keyof {
+      -readonly [Property in keyof TElement]: TElement[Property];
+    }
+  >(
     element: TElement,
-    property: keyof TElement,
-    callback?: PropertyCallback<TValue>
+    property: TProperty,
+    callback: PropertyCallback<TValue, TElement[TProperty]>
   ) {
     this.setElementProperty(element, property, callback);
 

@@ -54,7 +54,7 @@ describe("Value", () => {
 
   it("should bind multiple properties on an Element", () => {
     value.bindElementProperty(header, "innerText");
-    value.bindElementProperty(
+    value.bindElementPropertyWith(
       header,
       "hidden",
       (value) => value === "Hello world!"
@@ -107,7 +107,7 @@ describe("Value", () => {
 
   it("should bind multiple properties on an Element while setting with the set method", () => {
     value.bindElementProperty(header, "innerText");
-    value.bindElementProperty(
+    value.bindElementPropertyWith(
       header,
       "hidden",
       (value) => value === "Hello world!"
@@ -135,7 +135,7 @@ describe("Value", () => {
     expect(value["elements"].length).toBe(0);
     value.value = "test";
     value.bindElementProperty(header, "innerText");
-    value.bindElementProperty(
+    value.bindElementPropertyWith(
       header,
       "hidden",
       (value) => value === "new-test"
@@ -146,7 +146,7 @@ describe("Value", () => {
 
     const link = document.createElement("a");
     value.bindElementProperty(link, "innerText");
-    value.bindElementProperty(
+    value.bindElementPropertyWith(
       link,
       "href",
       (value) => `https://test.com/${value}`
@@ -194,7 +194,7 @@ describe("Value", () => {
   it("should unbind a template property", () => {
     spyOn(value["elements"], "splice").and.callThrough();
     value.bindElementProperty(header, "innerText");
-    value.bindElementProperty(
+    value.bindElementPropertyWith(
       header,
       "hidden",
       (value) => value === "Hello world!"

@@ -46,7 +46,7 @@ describe("Value", () => {
     });
     it("should bind multiple properties on an Element", () => {
         value.bindElementProperty(header, "innerText");
-        value.bindElementProperty(header, "hidden", (value) => value === "Hello world!");
+        value.bindElementPropertyWith(header, "hidden", (value) => value === "Hello world!");
         expect(header.innerText).toBe("Hello world!");
         expect(header.hidden).toBeTrue();
         value.value = "New value!";
@@ -88,7 +88,7 @@ describe("Value", () => {
     });
     it("should bind multiple properties on an Element while setting with the set method", () => {
         value.bindElementProperty(header, "innerText");
-        value.bindElementProperty(header, "hidden", (value) => value === "Hello world!");
+        value.bindElementPropertyWith(header, "hidden", (value) => value === "Hello world!");
         expect(header.innerText).toBe("Hello world!");
         expect(header.hidden).toBeTrue();
         value.set((currentValue) => currentValue + "!");
@@ -108,13 +108,13 @@ describe("Value", () => {
         expect(value["elements"].length).toBe(0);
         value.value = "test";
         value.bindElementProperty(header, "innerText");
-        value.bindElementProperty(header, "hidden", (value) => value === "new-test");
+        value.bindElementPropertyWith(header, "hidden", (value) => value === "new-test");
         expect(header.innerText).toBe("test");
         expect(header.hidden).toBeFalse();
         expect(value["elements"].length).toBe(1);
         const link = document.createElement("a");
         value.bindElementProperty(link, "innerText");
-        value.bindElementProperty(link, "href", (value) => `https://test.com/${value}`);
+        value.bindElementPropertyWith(link, "href", (value) => `https://test.com/${value}`);
         expect(link.innerText).toBe("test");
         expect(link.href).toBe("https://test.com/test");
         expect(value["elements"].length).toBe(2);
@@ -147,7 +147,7 @@ describe("Value", () => {
     it("should unbind a template property", () => {
         spyOn(value["elements"], "splice").and.callThrough();
         value.bindElementProperty(header, "innerText");
-        value.bindElementProperty(header, "hidden", (value) => value === "Hello world!");
+        value.bindElementPropertyWith(header, "hidden", (value) => value === "Hello world!");
         expect(header.innerText).toBe("Hello world!");
         expect(header.hidden).toBeTrue();
         value.unbindElementProperty(header, "hidden");
