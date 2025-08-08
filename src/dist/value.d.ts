@@ -1,6 +1,6 @@
-type PropertyCallback<T> = ((value: T) => any) | undefined;
-type AttributeCallback<T> = ((value: T) => string) | undefined;
-type ClassCallback<T> = ((value: T) => boolean) | undefined;
+type PropertyCallback<T, S> = (value: T) => S;
+type AttributeCallback<T> = (value: T) => string;
+type ClassCallback<T> = (value: T) => boolean;
 /**
  * A `Value` is a wrapper for any type of variable.
  * A `Value` is useful because it allows for one-way binding to `Element` properties and attributes.
@@ -35,12 +35,23 @@ export declare class Value<TValue> {
      * Binds the value of a `Value` to a property of an `Element`.
      * When the value is updated, the property will be updated as well.
      *
-     * Instead of simply setting the bound property to the value, an optional callback can be used to set the property based on the value.
+     * @param element An `Element`.
+     * @param property A property of the provided `Element` that is of the same type as the `Value`.
+     */
+    bindElementProperty<TElement extends Element, TProperty extends {
+        -readonly [Property in keyof TElement]: TElement[Property] extends TValue ? Property : never;
+    }[keyof TElement]>(element: TElement, property: TProperty): void;
+    /**
+     * Binds the value of a `Value` to a property of an `Element`.
+     * When the value is updated, the property will be updated using the provided callback.
+     *
      * @param element An `Element`.
      * @param property A property of the provided `Element`.
      * @param callback A function that is passed the value and returns the property's value.
      */
-    bindElementProperty<TElement extends Element>(element: TElement, property: keyof TElement, callback?: PropertyCallback<TValue>): void;
+    bindElementPropertyWith<TElement extends Element, TProperty extends keyof {
+        -readonly [Property in keyof TElement]: TElement[Property];
+    }>(element: TElement, property: TProperty, callback: PropertyCallback<TValue, TElement[TProperty]>): void;
     /**
      * Binds the value of a `Value` to an attribute of an `Element`.
      * When the value is updated, the attribute will be updated as well.
