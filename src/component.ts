@@ -64,7 +64,7 @@ export class Component extends HTMLElement {
       config.attachShadowRoot !== undefined ? config.attachShadowRoot : true;
     this.insertSelector = config.insertSelector;
 
-    if (config.template) {
+    if (config.template !== undefined) {
       this.template = Promise.resolve(config.template);
     } else if (config.templateUrl) {
       this.template = this.getTemplate(config.templateUrl);
@@ -150,6 +150,7 @@ export class Component extends HTMLElement {
 
     const styles = await Promise.all(this.styles);
 
+    let insertParent: ShadowRoot | HTMLElement;
     if (this.attachShadowRoot) {
       this.attachShadow({ mode: "open" });
 
@@ -157,17 +158,21 @@ export class Component extends HTMLElement {
         throw new Error("Failed to attach a shadow DOM to the component.");
       }
 
+      insertParent = this.shadowRoot;
       this.shadowRoot.innerHTML += template;
       this.shadowRoot.adoptedStyleSheets =
         this.shadowRoot.adoptedStyleSheets.concat(styles);
     } else {
+      insertParent = this;
       this.innerHTML += template;
       const root = this.getRootNode() as ShadowRoot;
       root.adoptedStyleSheets = root.adoptedStyleSheets.concat(styles);
     }
 
-    if (this.insertSelector && existingHTML) {
-      const insertElement = this.getChild<Element>(this.insertSelector);
+    if (this.insertSelector !== undefined && existingHTML) {
+      const insertElement = this.insertSelector
+        ? insertParent.querySelector<HTMLElement>(this.insertSelector)
+        : insertParent;
       if (insertElement) {
         insertElement.innerHTML += existingHTML;
       }
