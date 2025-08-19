@@ -114,6 +114,39 @@ describe("Custom HTML component", () => {
         expect(optionOne).toBeTruthy();
     });
 });
+describe("Custom HTML component with empty selector", () => {
+    class TestCustomHTMLWithEmptySelectorComponent extends Component {
+        constructor() {
+            super({
+                template: "",
+                styleUrls: styleSheets.map((sheet) => sheet.url),
+                insertSelector: ""
+            });
+        }
+    }
+    window.customElements.define("test-custom-html-empty-selector-component", TestCustomHTMLWithEmptySelectorComponent);
+    let testComponent;
+    beforeAll(() => {
+        Component["savedTemplates"] = new Map();
+        Component["savedStyles"] = new Map();
+        spyOn(window, "fetch").and.callFake(mockFetch);
+    });
+    beforeEach(() => {
+        testComponent = new TestCustomHTMLWithEmptySelectorComponent();
+    });
+    afterEach(async () => {
+        await testComponent["template"];
+        await testComponent["styles"];
+    });
+    it("should insert existing HTML into the component", async () => {
+        const span = document.createElement("span");
+        span.id = "optionOne";
+        testComponent.appendChild(span);
+        await testComponent.connectedCallback();
+        const optionOne = testComponent.getChild(`#${span.id}`);
+        expect(optionOne).toBeTruthy();
+    });
+});
 describe("Custom HTML component with bad selector", () => {
     class TestBadCustomHTMLComponent extends Component {
         constructor() {
@@ -147,6 +180,21 @@ describe("Custom HTML component with bad selector", () => {
         expect(content).toBeTruthy();
         const optionOne = testComponent.getChild(`#${span.id}`);
         expect(optionOne).toBeFalsy();
+    });
+});
+describe("Component with no template", () => {
+    class TestNoTemplateComponent extends Component {
+        constructor() {
+            super({
+                styleUrls: styleSheets.map((sheet) => sheet.url)
+            });
+        }
+    }
+    window.customElements.define("test-no-template-component", TestNoTemplateComponent);
+    it("should throw in constructor", async () => {
+        expect(() => {
+            new TestNoTemplateComponent();
+        }).toThrowError();
     });
 });
 describe("Component", () => {
