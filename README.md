@@ -1,6 +1,6 @@
 # Sapling
 
-A simple, front-end framework.
+A simple, front-end library.
 
 ## Documentation
 
