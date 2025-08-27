@@ -114,9 +114,6 @@ export class Component extends HTMLElement {
    * https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements#custom_element_lifecycle_callbacks
    */
   async connectedCallback() {
-    const existingHTML = this.innerHTML;
-    this.innerHTML = "";
-
     const template = await this.template;
 
     const styles = await Promise.all(this.styles);
@@ -126,7 +123,7 @@ export class Component extends HTMLElement {
     if (!this.shadowRoot) {
       throw new Error("Failed to attach a shadow DOM to the component.");
     }
-    this.shadowRoot.innerHTML += template;
+    this.shadowRoot.innerHTML = template;
     this.shadowRoot.adoptedStyleSheets =
       this.shadowRoot.adoptedStyleSheets.concat(styles);
   }
