@@ -1,6 +1,6 @@
 {
   "name": "@craiglington/sapling",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "A simple front-end library.",
   "main": "src/dist/index.js",
   "types": "src/dist/index.d.ts",
