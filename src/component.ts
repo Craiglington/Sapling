@@ -19,24 +19,6 @@
  * window.customElements.define("test-component", TestComponent);
  * ```
  *
- * There are optional configuration options for a `Component`.
- * - `attachShadowRoot`
- *   - Whether or not this component should be inserted into its own shadow DOM.
- * If `false`, this component will be inserted into its parent component's shadow DOM. If not provided, defaults to `true`.
- * - `insertSelector`
- *   - If provided, a component instance with existing HTML inside it will have that HTML inserted into an element in the template with a matching CSS selector.
- * This allows for a parent component to provide custom HTML to a child component within the parent component's template.
- *    - Example:
- *       ```
- *       // Custom component instance in a template
- *       <app-menu>
- *         // Custom html that will be inserted into the custom component's instance
- *         <span>Home</span>
- *         <span>Login</span>
- *         <span>Logout</span>
- *       </app-menu>
- *       ```
- *
  * See https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements#custom_element_lifecycle_callbacks for details on lifecycle events.
  */
 export class Component extends HTMLElement {
@@ -48,21 +30,14 @@ export class Component extends HTMLElement {
 
   private template: Promise<string>;
   private styles: Promise<CSSStyleSheet>[] = [];
-  private attachShadowRoot: boolean;
-  private insertSelector?: string;
 
   constructor(config: {
     template?: string;
     templateUrl?: string;
     styles?: string[];
     styleUrls?: string[];
-    attachShadowRoot?: boolean;
-    insertSelector?: string;
   }) {
     super();
-    this.attachShadowRoot =
-      config.attachShadowRoot !== undefined ? config.attachShadowRoot : true;
-    this.insertSelector = config.insertSelector;
 
     if (config.template !== undefined) {
       this.template = Promise.resolve(config.template);
@@ -116,9 +91,7 @@ export class Component extends HTMLElement {
    * @returns `null` if the element is not found or an `Element`.
    */
   getChild<E extends Element = Element>(selectors: string): E | null {
-    return this.attachShadowRoot
-      ? this.shadowRoot?.querySelector(selectors) || null
-      : this.querySelector(selectors);
+    return this.shadowRoot?.querySelector(selectors) || null;
   }
 
   /**
@@ -129,9 +102,7 @@ export class Component extends HTMLElement {
   getChildren<E extends Element = Element>(
     selectors: string
   ): NodeListOf<E> | null {
-    return this.attachShadowRoot
-      ? this.shadowRoot?.querySelectorAll(selectors) || null
-      : this.querySelectorAll(selectors);
+    return this.shadowRoot?.querySelectorAll(selectors) || null;
   }
 
   /**
@@ -150,33 +121,14 @@ export class Component extends HTMLElement {
 
     const styles = await Promise.all(this.styles);
 
-    let insertParent: ShadowRoot | HTMLElement;
-    if (this.attachShadowRoot) {
-      this.attachShadow({ mode: "open" });
+    this.attachShadow({ mode: "open" });
 
-      if (!this.shadowRoot) {
-        throw new Error("Failed to attach a shadow DOM to the component.");
-      }
-
-      insertParent = this.shadowRoot;
-      this.shadowRoot.innerHTML += template;
-      this.shadowRoot.adoptedStyleSheets =
-        this.shadowRoot.adoptedStyleSheets.concat(styles);
-    } else {
-      insertParent = this;
-      this.innerHTML += template;
-      const root = this.getRootNode() as ShadowRoot;
-      root.adoptedStyleSheets = root.adoptedStyleSheets.concat(styles);
+    if (!this.shadowRoot) {
+      throw new Error("Failed to attach a shadow DOM to the component.");
     }
-
-    if (this.insertSelector !== undefined && existingHTML) {
-      const insertElement = this.insertSelector
-        ? insertParent.querySelector<HTMLElement>(this.insertSelector)
-        : insertParent;
-      if (insertElement) {
-        insertElement.innerHTML += existingHTML;
-      }
-    }
+    this.shadowRoot.innerHTML += template;
+    this.shadowRoot.adoptedStyleSheets =
+      this.shadowRoot.adoptedStyleSheets.concat(styles);
   }
 
   /**

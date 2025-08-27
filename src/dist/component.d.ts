@@ -19,24 +19,6 @@
  * window.customElements.define("test-component", TestComponent);
  * ```
  *
- * There are optional configuration options for a `Component`.
- * - `attachShadowRoot`
- *   - Whether or not this component should be inserted into its own shadow DOM.
- * If `false`, this component will be inserted into its parent component's shadow DOM. If not provided, defaults to `true`.
- * - `insertSelector`
- *   - If provided, a component instance with existing HTML inside it will have that HTML inserted into an element in the template with a matching CSS selector.
- * This allows for a parent component to provide custom HTML to a child component within the parent component's template.
- *    - Example:
- *       ```
- *       // Custom component instance in a template
- *       <app-menu>
- *         // Custom html that will be inserted into the custom component's instance
- *         <span>Home</span>
- *         <span>Login</span>
- *         <span>Logout</span>
- *       </app-menu>
- *       ```
- *
  * See https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements#custom_element_lifecycle_callbacks for details on lifecycle events.
  */
 export declare class Component extends HTMLElement {
@@ -47,15 +29,11 @@ export declare class Component extends HTMLElement {
     private static savedStyles;
     private template;
     private styles;
-    private attachShadowRoot;
-    private insertSelector?;
     constructor(config: {
         template?: string;
         templateUrl?: string;
         styles?: string[];
         styleUrls?: string[];
-        attachShadowRoot?: boolean;
-        insertSelector?: string;
     });
     static getCSSStyleSheet(css: string): CSSStyleSheet;
     /**
