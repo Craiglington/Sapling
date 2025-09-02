@@ -53,28 +53,9 @@ const mockFetch = async (input: RequestInfo | URL) => {
   });
 };
 
-describe("Component with no template", () => {
-  class TestNoTemplateComponent extends Component {
-    constructor() {
-      super({
-        styleUrls: styleSheets.map((sheet) => sheet.url)
-      });
-    }
-  }
-  window.customElements.define(
-    "test-no-template-component",
-    TestNoTemplateComponent
-  );
-
-  it("should throw in constructor", async () => {
-    expect(() => {
-      new TestNoTemplateComponent();
-    }).toThrowError();
-  });
-});
-
 describe("Component", () => {
   class TestComponent extends Component {
+    static observedAttributes = ["size"];
     constructor() {
       super({
         templateUrl: template.url,
@@ -166,6 +147,26 @@ describe("Component", () => {
     const children = testComponent.getChildren("*");
     expect(children).toBeTruthy();
     expect(children?.length).toBe(2);
+  });
+});
+
+describe("Component with no template", () => {
+  class TestNoTemplateComponent extends Component {
+    constructor() {
+      super({
+        styleUrls: styleSheets.map((sheet) => sheet.url)
+      });
+    }
+  }
+  window.customElements.define(
+    "test-no-template-component",
+    TestNoTemplateComponent
+  );
+
+  it("should throw in constructor", async () => {
+    expect(() => {
+      new TestNoTemplateComponent();
+    }).toThrowError();
   });
 });
 

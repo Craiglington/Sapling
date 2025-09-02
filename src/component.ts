@@ -22,7 +22,7 @@
  * See https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements#custom_element_lifecycle_callbacks for details on lifecycle events.
  */
 export class Component extends HTMLElement {
-  static observedAttributes = [];
+  static observedAttributes: string[] = [];
   private static globalStyleSheets: CSSStyleSheet[] = [];
   private static globalStyleUrls: string[] = [];
   private static savedTemplates: Map<string, Promise<string>> = new Map();
