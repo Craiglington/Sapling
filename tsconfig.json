@@ -1,18 +1,22 @@
 {
   "compilerOptions": {
-    "module": "esnext",
+    "rootDir": "./src",
+    "outDir": "./src/dist",
+    "module": "nodenext",
     "target": "esnext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "nodenext",
     "noImplicitAny": true,
     "removeComments": false,
     "preserveConstEnums": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "declaration": true,
-    "outDir": "src/dist"
+    "declarationMap": true,
+    "isolatedModules": true,
+    "esModuleInterop": true
   },
-  "include": ["src"],
-  "exclude": ["src/dist"],
+  "include": ["./src"],
+  "exclude": ["./src/dist"],
   "watchOptions": {
     "watchFile": "useFsEvents",
     "watchDirectory": "useFsEvents",
