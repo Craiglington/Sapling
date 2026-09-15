@@ -1,4 +1,4 @@
-import { Value } from "/__src__/value.js";
+import { Value } from "/src/value.js";
 
 describe("Value", () => {
   let value: Value<string>;
@@ -11,7 +11,7 @@ describe("Value", () => {
 
   it("should create", () => {
     expect(value).toBeTruthy();
-    expect(value.value).toBe("Hello world!");
+    expect(value.value).toBe("Hello world!!");
     expect(header).toBeTruthy();
   });
 

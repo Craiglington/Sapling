@@ -1,4 +1,4 @@
-import { State } from "/__src__/state.js";
+import { State } from "/src/state.js";
 
 function getMockInitialState() {
   return {

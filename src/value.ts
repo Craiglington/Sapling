@@ -220,8 +220,7 @@ export class Value<TValue> {
     element: TElement
   ): ValueElement<TElement, TValue> {
     let existingElement = this.elements.find((e) => e.element === element) as
-      | ValueElement<TElement, TValue>
-      | undefined;
+      ValueElement<TElement, TValue> | undefined;
 
     if (!existingElement) {
       existingElement = {

@@ -1,4 +1,4 @@
-import { Observable } from "/__src__/observable.js";
+import { Observable } from "/src/observable.js";
 
 describe("Observable", () => {
   let observable: Observable<number>;

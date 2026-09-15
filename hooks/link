@@ -1,4 +1,0 @@
-#!/bin/bash
-
-chmod +x hooks/pre-push
-git config core.hooksPath hooks/

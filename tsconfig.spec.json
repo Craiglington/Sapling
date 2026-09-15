@@ -1,0 +1,27 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "rootDir": "./spec",
+    "outDir": "./spec/dist",
+    "types": ["jasmine"],
+    "declarationMap": false,
+    "tsBuildInfoFile": "./spec/dist/tsconfig.spec.tsbuildinfo",
+    "paths": {
+      "/src/*": ["./src/*"]
+    }
+  },
+  "include": ["./spec/**/*.spec.ts"],
+  "exclude": ["./spec/dist"],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    }
+  ],
+  "watchOptions": {
+    "watchFile": "useFsEvents",
+    "watchDirectory": "useFsEvents",
+    "fallbackPolling": "dynamicPriority",
+    "synchronousWatchDirectory": true
+  }
+}

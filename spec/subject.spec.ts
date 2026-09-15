@@ -1,4 +1,4 @@
-import { Subject } from "/__src__/subject.js";
+import { Subject } from "/src/subject.js";
 
 describe("Subject", () => {
   let subject: Subject<number>;

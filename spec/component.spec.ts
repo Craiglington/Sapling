@@ -1,4 +1,4 @@
-import { Component } from "/__src__/component.js";
+import { Component } from "/src/component.js";
 
 type File = { url: string; content: string };
 const template: File = {

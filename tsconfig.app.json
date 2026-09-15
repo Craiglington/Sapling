@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "rootDir": "./src",
+    "outDir": "./src/dist",
+    "tsBuildInfoFile": "./src/dist/tsconfig.app.tsbuildinfo"
+  },
+  "include": ["./src/**/*.ts"],
+  "exclude": ["./src/dist"],
+  "watchOptions": {
+    "watchFile": "useFsEvents",
+    "watchDirectory": "useFsEvents",
+    "fallbackPolling": "dynamicPriority",
+    "synchronousWatchDirectory": true
+  }
+}

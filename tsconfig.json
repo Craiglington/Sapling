@@ -1,7 +1,6 @@
 {
+  "compileOnSave": false,
   "compilerOptions": {
-    "rootDir": "./src",
-    "outDir": "./src/dist",
     "module": "nodenext",
     "target": "esnext",
     "moduleResolution": "nodenext",
@@ -15,12 +14,13 @@
     "isolatedModules": true,
     "esModuleInterop": true
   },
-  "include": ["./src"],
-  "exclude": ["./src/dist"],
-  "watchOptions": {
-    "watchFile": "useFsEvents",
-    "watchDirectory": "useFsEvents",
-    "fallbackPolling": "dynamicPriority",
-    "synchronousWatchDirectory": true
-  }
+  "files": [],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.spec.json"
+    }
+  ]
 }

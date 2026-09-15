@@ -29,7 +29,7 @@ export class Component extends HTMLElement {
   private static savedStyles: Map<string, Promise<CSSStyleSheet>> = new Map();
 
   private template: Promise<string>;
-  private styles: Promise<CSSStyleSheet>[] = [];
+  private styles: Promise<CSSStyleSheet>[] = []
 
   constructor(config: {
     template?: string;

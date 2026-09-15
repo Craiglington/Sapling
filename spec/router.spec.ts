@@ -1,5 +1,5 @@
-import { RouterService } from "/__src__/router.js";
-import { Component } from "/__src__/component.js";
+import { RouterService } from "/src/router.js";
+import { Component } from "/src/component.js";
 
 type File = { url: string; content: string };
 const templateOne: File = {
