@@ -11,7 +11,7 @@ describe("Value", () => {
 
   it("should create", () => {
     expect(value).toBeTruthy();
-    expect(value.value).toBe("Hello world!!");
+    expect(value.value).toBe("Hello world!");
     expect(header).toBeTruthy();
   });
 
