@@ -12,6 +12,8 @@
     "release": "npm run build && npm publish --access public",
     "prettier:check": "npx prettier . --check",
     "prettier": "npx prettier . --write",
+    "lint": "npx eslint .",
+    "lint:fix": "npx eslint . --fix",
     "prepare": "husky"
   },
   "repository": {
@@ -26,13 +28,16 @@
   "type": "module",
   "homepage": "https://github.com/Craiglington/sapling#readme",
   "devDependencies": {
+    "@eslint/js": "10.0.1",
     "@types/jasmine": "6.0.0",
     "@types/serve-static": "2.2.0",
+    "eslint": "10.11.0",
     "husky": "^9.1.7",
     "jasmine-browser-runner": "5.0.0",
     "jasmine-core": "7.0.2",
     "prettier": "3.9.6",
     "serve-static": "2.2.1",
-    "typescript": "7.0.2"
+    "typescript": "7.0.2",
+    "typescript-eslint": "8.70.0"
   }
 }
