@@ -26,6 +26,7 @@ fi
 
 (
   npm run prettier:check || exit 1
+  # npm run lint || exit 1
   npm run test || exit 1
 ) || { error "Validation failed. See details above."; exit 1; }
 
