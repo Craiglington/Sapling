@@ -1,14 +1,16 @@
 class RouterElement extends HTMLElement {
-  static routerElement: RouterElement | undefined = undefined;
+  static routerElements: RouterElement[] = [];
 
   connectedCallback() {
-    if (RouterElement.routerElement) return;
-    RouterElement.routerElement = this;
+    RouterElement.routerElements.push(this);
+    RouterService.route(window.location.pathname);
   }
 
   disconnectedCallback() {
-    if (RouterElement.routerElement !== this) return;
-    RouterElement.routerElement = undefined;
+    const routerElementIndex = RouterElement.routerElements.indexOf(this);
+    if (routerElementIndex !== -1) {
+      RouterElement.routerElements.splice(routerElementIndex, 1);
+    }
   }
 }
 
@@ -22,6 +24,12 @@ export type ComponentRoute = {
   guard?: () => boolean;
 };
 
+export type ChildrenRoute = {
+  component?: CustomElementConstructor;
+  children: Route[];
+  guard?: () => boolean;
+};
+
 /**
  * A `RedirectRoute` provides a path of redirection.
  */
@@ -32,7 +40,9 @@ export type RedirectRoute = {
 /**
  * A `Route` consists of a path and either a `ComponentRoute` or a `RedirectRoute`.
  */
-export type Route = { path: RegExp } & (ComponentRoute | RedirectRoute);
+export type Route = { path: RegExp } & (
+  ComponentRoute | ChildrenRoute | RedirectRoute
+);
 
 /**
  * Provided when initializing the `RouterService`.
@@ -65,7 +75,6 @@ export class RouterService {
       throw new Error("The RouterService can only be initialized once.");
     }
     this.config = config;
-    this.route(window.location.pathname);
   }
 
   /**
@@ -74,17 +83,29 @@ export class RouterService {
    * @param pushToHistory An option to not save the route to the browser's history.
    */
   static route(path: string, pushToHistory: boolean = true) {
-    if (!RouterElement.routerElement) {
-      throw new Error(
-        "The 'app-router' element has not been added to a template."
-      );
+    if (RouterElement.routerElements.length === 0) {
+      throw new Error("No 'app-router' element detected.");
     } else if (!this.config) {
       throw new Error("The RouterService has not been initialized.");
     }
 
+    this.routeWithRoutes(
+      path,
+      window.location.pathname,
+      this.config.routes,
+      pushToHistory
+    );
+  }
+
+  private static routeWithRoutes(
+    newPath: string,
+    currentPath: string,
+    routes: Route[],
+    pushToHistory: boolean = true
+  ) {
     let matchingComponent: CustomElementConstructor | undefined = undefined;
-    for (const route of this.config.routes) {
-      if (!route.path.test(path)) {
+    for (const route of routes) {
+      if (!route.path.test(newPath)) {
         continue;
       }
 
@@ -106,18 +127,21 @@ export class RouterService {
     this.insert(matchingComponent);
 
     if (!pushToHistory) return;
-    history.pushState({}, "", path);
+    history.pushState({}, "", newPath);
   }
 
-  private static insert(component: CustomElementConstructor) {
-    const sibling = RouterElement.routerElement?.nextElementSibling;
+  private static insert(
+    routerElement: RouterElement,
+    component: CustomElementConstructor
+  ) {
+    const sibling = routerElement.nextElementSibling;
     if (sibling && window.customElements.get(sibling.localName)) {
       sibling.remove();
     }
 
-    RouterElement.routerElement?.parentNode?.insertBefore(
+    routerElement.parentNode?.insertBefore(
       new component(),
-      RouterElement.routerElement.nextSibling
+      routerElement.nextSibling
     );
   }
 }
