@@ -1,16 +1,11 @@
 class RouterElement extends HTMLElement {
-  static routerElements: RouterElement[] = [];
-
-  connectedCallback() {
-    RouterElement.routerElements.push(this);
+  async connectedCallback() {
+    await RouterService.addRouterElement(this);
     RouterService.route(window.location.pathname);
   }
 
-  disconnectedCallback() {
-    const routerElementIndex = RouterElement.routerElements.indexOf(this);
-    if (routerElementIndex !== -1) {
-      RouterElement.routerElements.splice(routerElementIndex, 1);
-    }
+  async disconnectedCallback() {
+    await RouterService.removeRouterElement(this);
   }
 }
 
@@ -19,39 +14,43 @@ window.customElements.define("app-router", RouterElement);
 /**
  * A `ComponentRoute` provides a custom `Component` and an optional route guard.
  */
-export type ComponentRoute = {
+export interface ComponentRoute {
   component: CustomElementConstructor;
-  guard?: () => boolean;
-};
+  guard?: () => boolean | string;
+}
 
-export type ChildrenRoute = {
-  component?: CustomElementConstructor;
-  children: Route[];
-  guard?: () => boolean;
-};
+/**
+ * A `ChildrenRoute` provides a list of sub-routes alongside an optional custom `Component` and route guard.
+ */
+export type ChildrenRoute = Partial<ComponentRoute> & { children: Route[] };
 
 /**
  * A `RedirectRoute` provides a path of redirection.
  */
-export type RedirectRoute = {
+export interface RedirectRoute {
   redirectTo: string;
-};
+}
 
 /**
- * A `Route` consists of a path and either a `ComponentRoute` or a `RedirectRoute`.
+ * A `Route` consists of a path and either a `ComponentRoute`, a `ChildrenRoute`, or a `RedirectRoute`.
  */
-export type Route = { path: RegExp } & (
+export type Route = { path: string } & (
   ComponentRoute | ChildrenRoute | RedirectRoute
 );
 
-/**
- * Provided when initializing the `RouterService`.
- * The `RouterConfig` lists all application `Routes` and an optional custom `Component` to use if a path matches no `Route`.
- */
-export type RouterConfig = {
-  routes: Route[];
-  notFound?: CustomElementConstructor;
-};
+class AsyncLock {
+  private lock = Promise.resolve();
+
+  async acquire(): Promise<{ release: () => void }> {
+    const previousLock = this.lock;
+    let releaseLock: () => void;
+    this.lock = new Promise((resolve) => {
+      releaseLock = resolve;
+    });
+    await previousLock;
+    return { release: releaseLock! };
+  }
+}
 
 /**
  * The `RouterService` appends custom `Components` after the `app-router` element.
@@ -62,19 +61,46 @@ export type RouterConfig = {
  * If a route guard fails (returns `false`), the notFound `Component` will not be used. It is up to the route guard to redirect the user.
  */
 export class RouterService {
-  private static config?: RouterConfig;
+  private static routerElements: RouterElement[] = [];
+  private static routes?: Route[];
+  private static currentRoutes: Route[] = [];
+  private static routeLock = new AsyncLock();
+  private static;
 
   private constructor() {}
 
   /**
-   * Initializes the `RouterService` with a `RouterConfig`.
-   * @param config
+   * Initializes the `RouterService` with a list of `Route` objects.
+   * @param routes
    */
-  static init(config: RouterConfig) {
-    if (this.config) {
+  static init(routes: Route[]) {
+    if (this.routes !== undefined) {
       throw new Error("The RouterService can only be initialized once.");
     }
-    this.config = config;
+    this.routes = routes;
+  }
+
+  static async addRouterElement(routerElement: RouterElement): Promise<void> {
+    const lock = await this.routeLock.acquire();
+    try {
+      this.routerElements.push(routerElement);
+    } finally {
+      lock.release();
+    }
+  }
+
+  static async removeRouterElement(
+    routerElement: RouterElement
+  ): Promise<void> {
+    const lock = await this.routeLock.acquire();
+    try {
+      const routerElementIndex = this.routerElements.indexOf(routerElement);
+      if (routerElementIndex >= 0) {
+        this.routerElements.splice(routerElementIndex, 1);
+      }
+    } finally {
+      lock.release();
+    }
   }
 
   /**
@@ -82,27 +108,41 @@ export class RouterService {
    * @param path The path to route towards. Also the path that will be inserted into the url.
    * @param pushToHistory An option to not save the route to the browser's history.
    */
-  static route(path: string, pushToHistory: boolean = true) {
-    if (RouterElement.routerElements.length === 0) {
-      throw new Error("No 'app-router' element detected.");
-    } else if (!this.config) {
+  static async route(
+    path: string,
+    pushToHistory: boolean = true
+  ): Promise<boolean> {
+    if (this.routes === undefined) {
       throw new Error("The RouterService has not been initialized.");
     }
 
-    this.routeWithRoutes(
-      path,
-      window.location.pathname,
-      this.config.routes,
-      pushToHistory
-    );
+    let routeResult: boolean;
+    const lock = await this.routeLock.acquire();
+    try {
+      let unmatchedPath = path;
+      for (let i = 0; i < this.currentRoutes.length; ++i) {}
+
+      routeResult = this.routeWithRoutes(
+        path,
+        window.location.pathname,
+        this.routes
+      );
+
+      if (routeResult && pushToHistory) {
+        history.pushState({}, "", path);
+      }
+    } finally {
+      lock.release();
+    }
+
+    return routeResult;
   }
 
   private static routeWithRoutes(
     newPath: string,
     currentPath: string,
-    routes: Route[],
-    pushToHistory: boolean = true
-  ) {
+    routes: Route[]
+  ): boolean {
     let matchingComponent: CustomElementConstructor | undefined = undefined;
     for (const route of routes) {
       if (!route.path.test(newPath)) {
@@ -125,9 +165,6 @@ export class RouterService {
 
     if (!matchingComponent) return;
     this.insert(matchingComponent);
-
-    if (!pushToHistory) return;
-    history.pushState({}, "", newPath);
   }
 
   private static insert(
