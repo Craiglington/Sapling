@@ -1,35 +1,124 @@
 /**
+ * Before Components can be used, Component initialization must be completed by calling the static `Component.init()` method.
+ *
  * A `Component` is an extension of an `HTMLElement`. It can be extended to create custom HTML elements.
- * When creating a `Component`, a template must be provided. Style sheets can also be provided to either individual components or to all components.
+ * When creating a `Component`, a template must be provided as either raw html or a URL. Style sheets can also be provided.
  *
- * For every custom `Component`, make sure to add it to the custom element registry.
- * This is what allows for the custom component to be used in an `.html` file.
+ * For details on lifecycle events, see https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements#custom_element_lifecycle_callbacks.
+ * For details on responding to attribute changes, see https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements#responding_to_attribute_changes.
  *
- * For example:
  * ```
  * class TestComponent extends Component {
+ *   static observedAttributes = ["color"];
+ *
  *   constructor() {
  *     super({
  *       templateUrl: "/components/app/app.component.html",
  *       styleUrls: ["/components/app/app.component.css"]
  *     });
  *   }
+ *
+ *   connectedCallback() {
+ *     console.log("Custom element added to page.");
+ *   }
+ *
+ *   disconnectedCallback() {
+ *     console.log("Custom element removed from page.");
+ *   }
+ *
+ *   connectedMoveCallback() {
+ *     console.log("Custom element moved with moveBefore()");
+ *   }
+ *
+ *   adoptedCallback() {
+ *     console.log("Custom element moved to new page.");
+ *   }
+ *
+ *   attributeChangedCallback(name, oldValue, newValue) {
+ *     console.log(`Attribute ${name} has changed.`);
+ *   }
  * }
- *
- * window.customElements.define("test-component", TestComponent);
  * ```
- *
- * See https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements#custom_element_lifecycle_callbacks for details on lifecycle events.
  */
 export class Component extends HTMLElement {
   static observedAttributes: string[] = [];
-  private static globalStyleSheets: CSSStyleSheet[] = [];
-  private static globalStyleUrls: string[] = [];
-  private static savedTemplates: Map<string, Promise<string>> = new Map();
-  private static savedStyles: Map<string, Promise<CSSStyleSheet>> = new Map();
+  private static readonly componentNames = new Set<string>();
+  private static readonly globalStyleSheets: CSSStyleSheet[] = [];
+  private static readonly globalStyleUrls: string[] = [];
+  private static readonly savedTemplates = new Map<string, Promise<string>>();
+  private static readonly savedStyles = new Map<
+    string,
+    Promise<CSSStyleSheet>
+  >();
 
   private template: Promise<string>;
   private styles: Promise<CSSStyleSheet>[] = [];
+
+  /**
+   * @returns A boolean that describes if Component initialization is complete.
+   */
+  static isInitialized(): boolean {
+    return this.componentNames.size > 0;
+  }
+
+  /**
+   * Initializes the Component with various options.
+   * @param options A list of components, global styles, and global style URLs.
+   * @throws If Component initialization is already complete, no components are provided in the `options` parameter,
+   * or `window.customElements.define()` fails. See https://developer.mozilla.org/en-US/docs/Web/API/CustomElementRegistry/define#exceptions.
+   */
+  static init(options: {
+    components: { name: string; constructor: CustomElementConstructor }[];
+    globalStyles?: string[];
+    globalStyleUrls?: string[];
+  }) {
+    if (this.isInitialized()) {
+      throw new Error("Component initialization is already complete.");
+    }
+
+    if (options.components.length === 0) {
+      throw new Error(
+        "At least one component must be provided during Component initialization."
+      );
+    }
+
+    try {
+      if (options.globalStyles !== undefined) {
+        for (const globalStyle of options.globalStyles) {
+          this.globalStyleSheets.push(this.getCSSStyleSheet(globalStyle));
+        }
+      }
+
+      if (options.globalStyleUrls !== undefined) {
+        for (const globalStyleUrl of options.globalStyleUrls) {
+          this.globalStyleUrls.push(globalStyleUrl);
+        }
+      }
+
+      for (const component of options.components) {
+        /**
+         * No need to check if a component name already exists because the
+         * custom element registry's define method will throw if a custom element
+         * with either the same name or constructor has already been defined.
+         * https://developer.mozilla.org/en-US/docs/Web/API/CustomElementRegistry/define#exceptions
+         */
+        this.componentNames.add(component.name);
+        window.customElements.define(component.name, component.constructor);
+      }
+    } catch (error) {
+      this.componentNames.clear();
+      this.globalStyleSheets.length = 0;
+      this.globalStyleUrls.length = 0;
+      console.error("Component initialization failed.", error);
+      throw error;
+    }
+  }
+
+  private static getCSSStyleSheet(css: string): CSSStyleSheet {
+    const newSheet = new CSSStyleSheet();
+    newSheet.replaceSync(css);
+    return newSheet;
+  }
 
   constructor(config: {
     template?: string;
@@ -38,6 +127,14 @@ export class Component extends HTMLElement {
     styleUrls?: string[];
   }) {
     super();
+
+    if (!Component.isInitialized()) {
+      throw new Error("Component initialization has not been completed.");
+    } else if (!Component.componentNames.has(this.localName)) {
+      throw new Error(
+        `${this.localName} was not listed as a component during Component initialization.`
+      );
+    }
 
     if (config.template !== undefined) {
       this.template = Promise.resolve(config.template);
@@ -59,50 +156,6 @@ export class Component extends HTMLElement {
     } else if (config.styleUrls) {
       this.styles = this.styles.concat(this.getStyleSheets(config.styleUrls));
     }
-  }
-
-  static getCSSStyleSheet(css: string): CSSStyleSheet {
-    const newSheet = new CSSStyleSheet();
-    newSheet.replaceSync(css);
-    return newSheet;
-  }
-
-  /**
-   *
-   * Using this method will only add a global stylesheet to Components not yet created.
-   * @param css The css.
-   */
-  static addGlobalStyleSheet(css: string) {
-    Component.globalStyleSheets.push(Component.getCSSStyleSheet(css));
-  }
-
-  /**
-   *
-   * Using this method will only add a global stylesheet to Components not yet created.
-   * @param url The url of the stylesheet. Ex: `/global.css`.
-   */
-  static addGlobalStyleUrl(url: string) {
-    Component.globalStyleUrls.push(url);
-  }
-
-  /**
-   * Queries the component and returns a child.
-   * @param selectors A valid CSS selector.
-   * @returns `null` if the element is not found or an `Element`.
-   */
-  getChild<E extends Element = Element>(selectors: string): E | null {
-    return this.shadowRoot?.querySelector(selectors) || null;
-  }
-
-  /**
-   * Queries the component and returns a list of children.
-   * @param selectors A valid CSS selector.
-   * @returns `null` if the element is not found or a list of `Elements`.
-   */
-  getChildren<E extends Element = Element>(
-    selectors: string
-  ): NodeListOf<E> | null {
-    return this.shadowRoot?.querySelectorAll(selectors) || null;
   }
 
   /**
@@ -135,12 +188,32 @@ export class Component extends HTMLElement {
    */
   connectedMoveCallback() {}
 
+  /**
+   * Queries the component and returns a child.
+   * @param selectors A valid CSS selector.
+   * @returns `null` if the element is not found or an `Element`.
+   */
+  getChild<E extends Element = Element>(selectors: string): E | null {
+    return this.shadowRoot?.querySelector(selectors) || null;
+  }
+
+  /**
+   * Queries the component and returns a list of children.
+   * @param selectors A valid CSS selector.
+   * @returns `null` if the element is not found or a list of `Elements`.
+   */
+  getChildren<E extends Element = Element>(
+    selectors: string
+  ): NodeListOf<E> | null {
+    return this.shadowRoot?.querySelectorAll(selectors) || null;
+  }
+
   private getTemplate(templateUrl: string): Promise<string> {
     const saved = Component.savedTemplates.get(templateUrl);
     if (saved) return saved;
 
     const fetchResult = this.fetchFile(templateUrl).catch((error: Error) => {
-      console.error(`Failed to fetch template at ${templateUrl}: `, error);
+      console.error(`Failed to fetch template at ${templateUrl}.`, error);
       return "";
     });
     Component.savedTemplates.set(templateUrl, fetchResult);
@@ -165,7 +238,7 @@ export class Component extends HTMLElement {
           return newSheet;
         })
         .catch((error: Error) => {
-          console.error(`Failed to fetch styles at ${styleUrl}: `, error);
+          console.error(`Failed to fetch styles at ${styleUrl}.`, error);
           return new CSSStyleSheet();
         });
       Component.savedStyles.set(styleUrl, sheet);
@@ -178,7 +251,7 @@ export class Component extends HTMLElement {
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(
-        `Response not ok. Status: ${response.status}. ${response.statusText}`
+        `Response not ok: ${response.status} ${response.statusText}.`
       );
     }
     return await response.text();

@@ -4,16 +4,16 @@
 export type Subscriber<T> = (value: T) => void;
 
 /**
- * A `Subscription` is returned when subscribing to an `Observable`. Allows for unsubscribing.
+ * A `Subscription` is returned when subscribing to an `Publisher`. Allows for unsubscribing.
  */
-export type Subscription = {
+export interface Subscription {
   unsubscribe: () => void;
-};
+}
 
 /**
- * Inspired by the RxJS `Observable`. An `Observable` emits values to a list of subscribers.
+ * A `Publisher` emits values to a list of subscribers.
  */
-export class Observable<T> {
+export class Publisher<T> {
   private subscribers: Subscriber<T>[] = [];
 
   /**
@@ -27,7 +27,7 @@ export class Observable<T> {
   }
 
   /**
-   * Adds a `Subscriber` to an `Observable`'s list of subscribers.
+   * Adds a subscriber to a publisher's list of subscribers.
    * @param subscriber The new `Subscriber`.
    * @returns A `Subscription` that allows for unsubscribing.
    */
